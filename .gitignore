@@ -1,2 +1,48 @@
-# Fichiers d'environnement
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+*.whl
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Environment / virtualenv
 .env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# VS Code / IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Streamlit
+.streamlit/
+
+# Logs and temp files
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Hugging Face cache (optional, avoids large files in repo)
+# ~/.cache/huggingface/hub
+.huggingface/
+
+# OS-specific
+.DS_Store
+Thumbs.db

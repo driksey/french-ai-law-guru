@@ -6,11 +6,11 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 EMB_MODEL = "all-MiniLM-L6-v2"
 
-def load_faqs(path="app/faqs.json"):
+def load_faqs(path="faq_chatbot/faqs.json"):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def build_embeddings_if_needed(faqs, emb_path="app/embeddings.npy"):
+def build_embeddings_if_needed(faqs, emb_path="faq_chatbot/embeddings.npy"):
     if os.path.exists(emb_path):
         return np.load(emb_path)
     model = SentenceTransformer(EMB_MODEL)
