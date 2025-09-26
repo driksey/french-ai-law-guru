@@ -1,4 +1,4 @@
-from app.utils import top_k_similar, build_embeddings_if_needed, load_faqs
+from faq_chatbot.utils import top_k_similar, build_embeddings_if_needed, load_faqs
 
 def test_top_k_similar_tmp(tmp_path):
     faqs = [
