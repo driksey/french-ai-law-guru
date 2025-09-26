@@ -1,0 +1,10 @@
+streamlit
+huggingface-hub
+sentence-transformers
+scikit-learn
+numpy
+python-dotenv
+pytest
+pre-commit
+black
+ruff
