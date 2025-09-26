@@ -10,9 +10,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.10, 3.11]
 
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -31,7 +28,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.10
 
       - name: Install dependencies
         run: |
