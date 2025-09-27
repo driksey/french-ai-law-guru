@@ -18,7 +18,6 @@ It retrieves the most relevant FAQ entries and generates answers based on contex
 
 ## 🛠️ Installation
 
-```bash
 # Clone the repo
 git clone https://github.com/<USER>/<REPO>.git
 cd <REPO>
