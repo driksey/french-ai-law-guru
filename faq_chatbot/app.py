@@ -16,7 +16,7 @@ st.title("FAQ Chatbot")
 
 with st.sidebar:
     st.markdown("## Settings")
-    model = os.getenv("HF_MODEL", "google/gemma-2-2b-it:nebius")
+    model = os.getenv("HF_MODEL", "google/gemma-2-2b-it")
     st.write(f"Model: {model}")
     top_k = st.slider("Number of FAQ snippets to include", 1, 5, 3)
 

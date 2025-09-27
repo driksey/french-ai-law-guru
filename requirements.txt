@@ -8,4 +8,6 @@ pytest
 pre-commit
 black
 ruff
-openai
+langchain
+langchain-community
+langchain-huggingface
