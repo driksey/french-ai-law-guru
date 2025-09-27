@@ -6,7 +6,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 EMB_MODEL = "all-MiniLM-L6-v2"
 
-def load_faqs(path="faq_chatbot/faqs.json"):
+def load_faqs(path="docs/faqs.json"):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
