@@ -19,32 +19,39 @@ It retrieves the most relevant FAQ entries and generates answers based on contex
 ## 🛠️ Installation
 
 # Clone the repo
+```
 git clone https://github.com/<USER>/<REPO>.git
 cd <REPO>
+```
 
 # Create virtual environment
+```
 python -m venv .venv
 source .venv/bin/activate   # Linux/Mac
 .venv\Scripts\activate      # Windows
+```
 
 # Install dependencies
+```
 pip install --upgrade pip
 pip install -r requirements.txt
 pip install -e .
+```
 
 ## 🔑 Environment Variables
 
 Create a .env file in the project root:
-
+```
 HF_TOKEN=your_huggingface_token
 HF_MODEL=google/gemma-2-2b-it
+```
 
 ## ▶️ Usage
 
 Run the app locally:
-
+```
 streamlit run app/main.py
-
+```
 
 Then open http://localhost:8501
 .
@@ -60,6 +67,7 @@ Run linter:
 
 ruff check .
 
+```
 ## 📂 Project Structure
 faq-chatbot/
 │── faq_chatbot/
@@ -83,6 +91,7 @@ faq-chatbot/
 │── .env.example          # Sample environment variables
 │── .github/workflows/ci.yml  # CI pipeline configuration
 │── .pre-commit-config.yaml   # Pre-commit hooks configuration
+```
 
 ## 👨‍💻 Author
 
