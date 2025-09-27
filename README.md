@@ -1,6 +1,8 @@
 # Mini FAQ Chatbot 🤖
 
-![CI](https://github.com/<USER>/<REPO>/actions/workflows/ci.yml/badge.svg)
+![CI - main](https://github.com/driksey/faq-chatbot/actions/workflows/ci.yml/badge.svg?branch=main) ![CI - develop](https://github.com/driksey/faq-chatbot/actions/workflows/ci.yml/badge.svg?branch=develop)
+
+
 
 A lightweight FAQ chatbot built with **Streamlit** and Hugging Face models (`google/gemma-2-2b-it` by default).  
 It retrieves the most relevant FAQ entries and generates answers based on context.
