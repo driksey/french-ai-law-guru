@@ -67,8 +67,8 @@ Run linter:
 
 ruff check .
 
-```
 ## 📂 Project Structure
+```
 faq-chatbot/
 │── faq_chatbot/
 │   ├── __init__.py      # Makes the folder a Python package
