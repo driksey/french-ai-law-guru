@@ -11,3 +11,9 @@ ruff
 langchain
 langchain-community
 langchain-huggingface
+langchain-core
+langgraph
+chromadb
+ipython
+pypdf
+langsmith
