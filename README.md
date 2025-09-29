@@ -3,7 +3,7 @@
 ![CI - main](https://github.com/driksey/french-ai-law-guru/actions/workflows/ci.yml/badge.svg?branch=main) ![CI - develop](https://github.com/driksey/french-ai-law-guru/actions/workflows/ci.yml/badge.svg?branch=develop)
 
 A sophisticated RAG (Retrieval-Augmented Generation) chatbot built with **Streamlit**, **LangChain**, and **LangGraph** for answering questions about AI regulations in France.  
-It processes PDF documents, creates embeddings, and uses Hugging Face models to generate contextual answers.
+It processes PDF documents, creates embeddings, and uses **Llama 3.1 8B** via Ollama to generate contextual answers with advanced reasoning capabilities.
 
 ---
 
@@ -13,9 +13,21 @@ It processes PDF documents, creates embeddings, and uses Hugging Face models to 
 - **Vectorstore Caching**: Intelligent caching system to speed up document loading and embedding creation
 - **LangSmith Integration**: Built-in tracing and monitoring for performance optimization and debugging
 - **Ollama Integration**: Uses Ollama with Llama 3.1 8B for advanced reasoning and tool calling
+- **Local LLM**: Runs entirely locally with Llama 3.1 8B (~4.9GB) - no external API dependencies
 - **Agent-Based Processing**: Uses LangGraph agents for intelligent question answering
 - **User-friendly Interface**: Clean Streamlit interface with cache management and settings
 - **CI/CD Pipeline**: Includes linting, testing, and automated workflows  
+
+---
+
+## 🤖 Model Specifications
+
+**Llama 3.1 8B via Ollama**
+- **Model Size**: ~4.9GB (optimized by Ollama)
+- **RAM Required**: 6-8GB
+- **Features**: Advanced reasoning, tool calling, RAG optimization
+- **Performance**: Excellent for legal document analysis and Q&A
+- **Local Processing**: No external API calls required
 
 ---
 
@@ -33,21 +45,21 @@ It processes PDF documents, creates embeddings, and uses Hugging Face models to 
 
 ### Setup
 
-# Clone the repo
-```
+### Clone the repo
+```bash
 git clone https://github.com/<USER>/french-ai-law-guru.git
 cd french-ai-law-guru
 ```
 
-# Create virtual environment
-```
+### Create virtual environment
+```bash
 python -m venv .venv
 source .venv/bin/activate   # Linux/Mac
 .venv\Scripts\activate      # Windows
 ```
 
-# Install dependencies
-```
+### Install dependencies
+```bash
 pip install --upgrade pip
 pip install -r requirements.txt
 pip install -e .
@@ -61,7 +73,7 @@ Create a `.env` file in the project root:
 # Hugging Face Configuration
 HF_TOKEN=your_huggingface_token
 # Ollama configuration (no API key needed for local models)
-OLLAMA_MODEL=deepseek-r1:7b
+OLLAMA_MODEL=llama3.1:8b
 
 # LangSmith Configuration (Optional - for tracing and monitoring)
 LANGCHAIN_API_KEY=your_langsmith_api_key_here
@@ -97,7 +109,7 @@ python run_streamlit.py
 ### Alternative Method
 Or run directly with Streamlit:
 ```bash
-streamlit run faq_chatbot/app.py
+streamlit run legal_ai_assistant/app.py
 ```
 
 ## 🐳 Docker Deployment
@@ -106,8 +118,8 @@ streamlit run faq_chatbot/app.py
 
 ```bash
 # Clone and run
-git clone https://github.com/<USER>/<REPO>.git
-cd <REPO>
+git clone https://github.com/<USER>/french-ai-law-guru.git
+cd french-ai-law-guru
 docker-compose up --build
 ```
 
@@ -131,7 +143,7 @@ docker-compose down
 
 ### Container Features
 
-- ✅ **Ollama pre-installed** with DeepSeek R1 7B
+- ✅ **Ollama pre-installed** with Llama 3.1 8B
 - ✅ **Model persistence** between container restarts
 - ✅ **Automatic model download** on first run
 - ✅ **Health checks** for monitoring
@@ -143,12 +155,12 @@ docker-compose down
 Open your browser and go to: http://localhost:8501
 
 ### First Run
-- The app will automatically process PDF documents in the `docs/` folder
+- The app will automatically process PDF documents in the `legal_docs/` folder
 - Embeddings will be created and cached for faster subsequent runs
 - If LangSmith is configured, you'll see tracing information in the sidebar
 
 ### Document Management
-- Place your PDF documents in the `docs/` folder
+- Place your PDF documents in the `legal_docs/` folder
 - The app supports multiple PDF files
 - Documents are automatically chunked and processed
 - Use the "Clear Cache" button in the sidebar to refresh embeddings when documents change
@@ -156,27 +168,28 @@ Open your browser and go to: http://localhost:8501
 ## 🧪 Testing & Linting
 
 Run tests:
-
+```bash
 pytest
-
+```
 
 Run linter:
-
+```bash
 ruff check .
+```
 
 ## 📂 Project Structure
 ```
-faq-chatbot/
-├── faq_chatbot/                 # Main application package
+french-ai-law-guru/
+├── legal_ai_assistant/          # Main application package
 │   ├── __init__.py             # Package initialization
 │   ├── app.py                  # Main Streamlit application
 │   ├── agents.py               # LangGraph agent definitions and workflow
 │   ├── chat_handler.py         # Question processing and answer generation
-│   ├── local_models.py         # Hugging Face model client configuration
+│   ├── local_models.py         # Ollama model client configuration
 │   ├── config.py               # Application configuration
 │   └── utils.py                # Document processing, embeddings, and caching utilities
 │
-├── docs/                       # PDF documents for processing
+├── legal_docs/                  # PDF documents for processing
 │   ├── AI ACT.pdf             # AI Act regulation document
 │   ├── GDPR.pdf               # GDPR regulation document
 │   └── faqs.json              # FAQ data (legacy format)
@@ -193,11 +206,10 @@ faq-chatbot/
 ├── .env                        # Environment variables (create this)
 ├── .gitignore                  # Git ignore rules
 ├── Dockerfile                  # Docker configuration
+├── docker-compose.yml          # Docker Compose configuration
 ├── requirements.txt            # Python dependencies
-├── setup.py                    # Package setup configuration
+├── pyproject.toml              # Project configuration
 ├── run_streamlit.py            # Streamlit app launcher
-├── LOCAL_MODELS_GUIDE.md       # Local models configuration guide
-├── LANGSMITH_SETUP.md          # LangSmith configuration guide
 └── README.md                   # This file
 ```
 
@@ -207,9 +219,10 @@ faq-chatbot/
 - **`agents.py`**: LangGraph agent implementation for RAG workflow
 - **`chat_handler.py`**: Handles question processing and answer generation
 - **`utils.py`**: Core utilities for PDF processing, embeddings, and caching
-- **`local_models.py`**: Hugging Face model client configuration
+- **`local_models.py`**: Ollama model client configuration for Llama 3.1 8B
+- **`config.py`**: Centralized configuration including LLM and embedding settings
 - **`chroma_db/`**: Stores processed vectorstores for faster loading
-- **`docs/`**: Contains PDF documents that the chatbot processes
+- **`legal_docs/`**: Contains PDF documents that the chatbot processes
 
 ## 🔍 LangSmith Integration
 
@@ -232,7 +245,9 @@ This chatbot includes built-in LangSmith integration for monitoring, tracing, an
 - **Features**: View traces, metrics, token usage, and error logs
 
 ### Advanced Configuration
-For detailed setup instructions, see [LANGSMITH_SETUP.md](LANGSMITH_SETUP.md).
+For detailed setup instructions, see the configuration files in the project.
+
+> **💡 Tip**: The app automatically uses the `llama3.1:8b` model configured in `legal_ai_assistant/config.py`. You can modify the model settings there if needed.
 
 ## 🐳 Docker Support
 
@@ -240,10 +255,10 @@ The project includes Docker configuration for easy deployment:
 
 ```bash
 # Build the Docker image
-docker build -t faq-chatbot .
+docker build -t french-ai-law-guru .
 
 # Run the container
-docker run -p 8501:8501 --env-file .env faq-chatbot
+docker run -p 8501:8501 --env-file .env french-ai-law-guru
 ```
 
 ## 🤝 Contributing
