@@ -1,7 +1,7 @@
 # chat_handler.py
 import time
 from langchain_core.messages import HumanMessage
-from faq_chatbot.utils import retrieve_documents
+from legal_ai_assistant.utils import retrieve_documents
 
 
 def process_question_with_agent(agent, question):

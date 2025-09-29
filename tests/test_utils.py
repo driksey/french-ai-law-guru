@@ -1,4 +1,4 @@
-from faq_chatbot.utils import top_k_similar, build_embeddings_if_needed
+from legal_ai_assistant.utils import top_k_similar, build_embeddings_if_needed
 
 def test_top_k_similar_tmp(tmp_path):
     faqs = [

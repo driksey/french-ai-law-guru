@@ -3,7 +3,7 @@ from langchain_core.messages import ToolMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import START, END, MessagesState, StateGraph
 from langchain.agents import Tool
-from faq_chatbot.utils import retrieve_documents
+from legal_ai_assistant.utils import retrieve_documents
 from pydantic import BaseModel, Field
 from typing import Optional
 import json

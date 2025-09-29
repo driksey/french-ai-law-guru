@@ -1,35 +1,47 @@
-ARG BASE_IMAGE=python:3.11-slim
-FROM ${BASE_IMAGE}
+# Dockerfile minimal optimisé avec LangSmith
+FROM python:3.11-slim
 
 WORKDIR /work
 
-# Install system dependencies including Ollama
+# Installer uniquement les dépendances essentielles
 RUN apt-get update && apt-get install -y \
-    build-essential \
     curl \
     wget \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
-# Install Ollama
+# Installer Ollama
 RUN curl -fsSL https://ollama.ai/install.sh | sh
 
-# Copy requirements first for better caching
-COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
+# Installer les dépendances Python optimisées
+RUN pip install --no-cache-dir \
+    streamlit \
+    python-dotenv \
+    langchain \
+    langchain-community \
+    langchain-core \
+    langchain-chroma \
+    langchain-ollama \
+    langchain-huggingface \
+    langgraph \
+    chromadb \
+    sentence-transformers \
+    scikit-learn \
+    numpy \
+    pypdf \
+    ollama \
+    langsmith
 
-# Copy the application
+# Copier l'application
 COPY . /work
 
-# Create a startup script that pulls the model and starts the app
+# Créer le script de démarrage
 RUN echo '#!/bin/bash\n\
 set -e\n\
 \n\
-# Start Ollama in background\n\
 echo "Starting Ollama service..."\n\
 ollama serve &\n\
-OLLAMA_PID=$!\n\
 \n\
-# Wait for Ollama to be ready\n\
 echo "Waiting for Ollama to start..."\n\
 for i in {1..30}; do\n\
   if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then\n\
@@ -40,7 +52,6 @@ for i in {1..30}; do\n\
   sleep 2\n\
 done\n\
 \n\
-# Check if model is already installed\n\
 if ollama list | grep -q "llama3.1:8b"; then\n\
   echo "Llama 3.1:8b model already installed"\n\
 else\n\
@@ -48,7 +59,6 @@ else\n\
   ollama pull llama3.1:8b\n\
 fi\n\
 \n\
-# Start Streamlit\n\
 echo "Starting Streamlit application..."\n\
 streamlit run run_streamlit.py --server.port=8501 --server.address=0.0.0.0\n\
 ' > start.sh && chmod +x start.sh
@@ -56,5 +66,4 @@ streamlit run run_streamlit.py --server.port=8501 --server.address=0.0.0.0\n\
 ENV PORT=8501
 EXPOSE 8501
 
-# Run the startup script
 CMD ["./start.sh"]

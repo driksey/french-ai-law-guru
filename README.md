@@ -1,6 +1,6 @@
-# AI Regulation FAQ Chatbot 🤖
+# Legal AI Assistant 🤖
 
-![CI - main](https://github.com/driksey/faq-chatbot/actions/workflows/ci.yml/badge.svg?branch=main) ![CI - develop](https://github.com/driksey/faq-chatbot/actions/workflows/ci.yml/badge.svg?branch=develop)
+![CI - main](https://github.com/driksey/legal-ai-assistant/actions/workflows/ci.yml/badge.svg?branch=main) ![CI - develop](https://github.com/driksey/legal-ai-assistant/actions/workflows/ci.yml/badge.svg?branch=develop)
 
 A sophisticated RAG (Retrieval-Augmented Generation) chatbot built with **Streamlit**, **LangChain**, and **LangGraph** for answering questions about AI regulations in France.  
 It processes PDF documents, creates embeddings, and uses Hugging Face models to generate contextual answers.
@@ -8,11 +8,11 @@ It processes PDF documents, creates embeddings, and uses Hugging Face models to 
 ---
 
 ## 🚀 Features
-- **PDF Document Processing**: Automatically loads and processes PDF documents from the `docs/` folder
+- **PDF Document Processing**: Automatically loads and processes PDF documents from the `legal_docs/` folder
 - **Advanced RAG Architecture**: Uses LangChain and LangGraph for sophisticated document retrieval and generation
 - **Vectorstore Caching**: Intelligent caching system to speed up document loading and embedding creation
 - **LangSmith Integration**: Built-in tracing and monitoring for performance optimization and debugging
-- **Ollama Integration**: Uses Ollama with DeepSeek R1 7B for advanced reasoning and tool calling
+- **Ollama Integration**: Uses Ollama with Llama 3.1 8B for advanced reasoning and tool calling
 - **Agent-Based Processing**: Uses LangGraph agents for intelligent question answering
 - **User-friendly Interface**: Clean Streamlit interface with cache management and settings
 - **CI/CD Pipeline**: Includes linting, testing, and automated workflows  
@@ -25,7 +25,7 @@ It processes PDF documents, creates embeddings, and uses Hugging Face models to 
 
 **Option 1: Local Development**
 1. **Install Ollama**: Download from [ollama.ai](https://ollama.ai)
-2. **Pull the model**: `ollama pull deepseek-r1:7b`
+2. **Pull the model**: `ollama pull llama3.1:8b`
 
 **Option 2: Docker Deployment (Recommended)**
 1. **Install Docker**: Download from [docker.com](https://docker.com)
@@ -35,8 +35,8 @@ It processes PDF documents, creates embeddings, and uses Hugging Face models to 
 
 # Clone the repo
 ```
-git clone https://github.com/<USER>/<REPO>.git
-cd <REPO>
+git clone https://github.com/<USER>/legal-ai-assistant.git
+cd legal-ai-assistant
 ```
 
 # Create virtual environment

@@ -1,23 +1,27 @@
+# Core application dependencies
 streamlit
-huggingface-hub
-hf-transfer
-sentence-transformers
-scikit-learn
-numpy
 python-dotenv
-pytest
-pre-commit
-black
-ruff
+
+# LangChain ecosystem
 langchain
 langchain-community
 langchain-core
 langchain-chroma
-langchain-openai
 langchain-ollama
+langchain-huggingface
 langgraph
+
+# Vector database and embeddings
 chromadb
-ipython
+sentence-transformers
+scikit-learn
+numpy
+
+# Document processing
 pypdf
-langsmith
+
+# Ollama integration
 ollama
+
+# LangSmith tracing
+langsmith

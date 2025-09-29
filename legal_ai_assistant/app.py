@@ -1,12 +1,12 @@
 # app.py
 import streamlit as st
 from dotenv import load_dotenv
-from faq_chatbot.utils import load_pdfs, preprocess_pdfs, load_or_create_vectorstore
-from faq_chatbot.local_models import create_local_llm, get_model_info
-from faq_chatbot.agents import create_rag_agent
-from faq_chatbot.chat_handler import process_question_with_agent
-from faq_chatbot.utils import retrieve_documents
-from faq_chatbot.config import APP_CONFIG
+from legal_ai_assistant.utils import load_pdfs, preprocess_pdfs, load_or_create_vectorstore
+from legal_ai_assistant.local_models import create_local_llm, get_model_info
+from legal_ai_assistant.agents import create_rag_agent
+from legal_ai_assistant.chat_handler import process_question_with_agent
+from legal_ai_assistant.utils import retrieve_documents
+from legal_ai_assistant.config import APP_CONFIG
 import sys
 from pathlib import Path
 
@@ -15,18 +15,18 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 load_dotenv()
 
 st.set_page_config(page_title=APP_CONFIG["title"], layout=APP_CONFIG["page_layout"])
-st.title("AI Regulations Chatbot")
+st.title("Legal AI Assistant")
 
 with st.sidebar:
     st.markdown("## 🏠 Local Model Settings")
     
     # Model configuration
     st.markdown("### Model Configuration")
-    st.info("🚀 Using DeepSeek R1 7B via Ollama (~4-6GB RAM)")
+    st.info("🚀 Using Llama 3.1 8B via Ollama (~6-8GB RAM)")
     
     # Show model information
     model_info = get_model_info()
-    from faq_chatbot.config import LLM_CONFIG
+    from legal_ai_assistant.config import LLM_CONFIG
     st.markdown(f"**Model:** {LLM_CONFIG['model_name']}")
     st.markdown(f"- Size: {model_info['size']}")
     st.markdown(f"- RAM Required: {model_info['ram_required']}")
@@ -41,7 +41,7 @@ with st.sidebar:
     )
     
 
-path = "docs"
+path = "legal_docs"
 docs = load_pdfs(path)
 docs_processed = preprocess_pdfs(docs)
 
@@ -66,10 +66,10 @@ with st.spinner("Loading documents and embeddings..."):
 chat_model = get_chat_model()
 
 if chat_model is None:
-    st.error("Failed to load DeepSeek R1 model via Ollama. Please ensure:")
+    st.error("Failed to load Llama 3.1 8B model via Ollama. Please ensure:")
     st.markdown("1. **Ollama is installed and running**")
-    st.markdown("2. **Model is installed**: Run `ollama pull deepseek-r1:7b`")
-    st.markdown("3. **Check system resources** (4-6GB RAM required)")
+    st.markdown("2. **Model is installed**: Run `ollama pull llama3.1:8b`")
+    st.markdown("3. **Check system resources** (6-8GB RAM required)")
     st.stop()
 
 agent = get_rag_agent(chat_model, retriever, top_k)
