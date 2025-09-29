@@ -1,6 +1,6 @@
 # French AI Law Guru 🤖
 
-![CI - main](https://github.com/driksey/french-ai-law-guru/actions/workflows/ci.yml/badge.svg?branch=main) ![CI - develop](https://github.com/driksey/french-ai-law-guru/actions/workflows/ci.yml/badge.svg?branch=develop)
+![CI - main branch](https://github.com/driksey/french-ai-law-guru/actions/workflows/ci.yml/badge.svg?branch=main&label=main) ![CI - develop branch](https://github.com/driksey/french-ai-law-guru/actions/workflows/ci.yml/badge.svg?branch=develop&label=develop)
 
 A sophisticated RAG (Retrieval-Augmented Generation) chatbot built with **Streamlit**, **LangChain**, and **LangGraph** for answering questions about AI regulations in France.  
 It processes PDF documents, creates embeddings, and uses **Llama 3.1 8B** via Ollama to generate contextual answers with advanced reasoning capabilities.
