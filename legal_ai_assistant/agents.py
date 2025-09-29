@@ -53,32 +53,19 @@ class BasicToolNode:
 
 
 def create_prompt():
-    """Create the system prompt for the agent optimized for Falcon-E-1B with structured tool calling."""
+    """Create the system prompt optimized for fast inference."""
     return ChatPromptTemplate.from_messages([
-        ("system", """You are a helpful AI assistant specialized in answering questions about AI regulations in France.
+        ("system", """AI assistant for French AI regulations. Use tool_rag for all questions.
 
-You MUST use the tool_rag function for EVERY question to provide accurate, document-based answers.
+TOOL: tool_rag(query) - Search AI regulation documents
 
-AVAILABLE TOOL:
-- tool_rag(query): Search for relevant information in AI regulation documents
+WORKFLOW:
+1. Call tool_rag with user question
+2. Provide concise answer based on results
 
-MANDATORY WORKFLOW:
-1. ALWAYS call tool_rag with the user's question as the query parameter
-2. Analyze the retrieved documents carefully
-3. Provide a clear and comprehensive answer based on the found information
+FORMAT: {{"name": "tool_rag", "arguments": {{"query": "question"}}}}
 
-REQUIRED FORMAT FOR TOOL CALLS:
-You must respond with a JSON object in this exact format:
-{{"name": "tool_rag", "arguments": {{"query": "user question here"}}}}
-
-EXAMPLES:
-User: "What is the AI Act?"
-You: {{"name": "tool_rag", "arguments": {{"query": "What is the AI Act?"}}}}
-
-User: "Tell me about GDPR requirements"
-You: {{"name": "tool_rag", "arguments": {{"query": "Tell me about GDPR requirements"}}}}
-
-CRITICAL: You MUST use the tool_rag function for EVERY question. Always respond with the JSON format above."""),
+Keep responses concise and focused."""),
         ("placeholder", "{history}"),
     ])
 

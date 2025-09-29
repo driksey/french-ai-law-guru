@@ -14,12 +14,27 @@ def create_local_llm():
     """
     model_name = LLM_CONFIG["model_name"]
     try:
-        # Create ChatOllama instance
+        # Create ChatOllama instance optimized for CPU-only systems
         chat_model = ChatOllama(
             model=model_name,
             temperature=LLM_CONFIG["temperature"],
             num_predict=LLM_CONFIG["max_new_tokens"],
-            verbose=True
+            verbose=True,
+            # CPU-specific optimizations for Llama 3.2 3B
+            num_ctx=4096,  # Larger context for Llama 3.2 3B
+            num_thread=6,  # Use more CPU threads for better performance
+            num_gpu=0,     # Disable GPU completely
+            repeat_penalty=1.1,
+            top_k=40,
+            top_p=0.9,
+            # CPU memory optimizations for Llama 3.2 3B
+            num_batch=512,  # Larger batch size for Llama 3.2 3B
+            use_mmap=True,  # Memory mapping for faster loading
+            use_mlock=False, # Disable mlock on CPU to avoid memory issues
+            low_vram=True,  # Optimize for lower memory usage
+            # Additional CPU optimizations
+            num_keep=5,     # Keep fewer tokens in context
+            tfs_z=1.0,      # Tail free sampling for faster generation
         )
 
         print("✅ Ollama ChatOllama initialized successfully")
