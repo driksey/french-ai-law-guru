@@ -12,7 +12,7 @@ It processes PDF documents, creates embeddings, and uses Hugging Face models to 
 - **Advanced RAG Architecture**: Uses LangChain and LangGraph for sophisticated document retrieval and generation
 - **Vectorstore Caching**: Intelligent caching system to speed up document loading and embedding creation
 - **LangSmith Integration**: Built-in tracing and monitoring for performance optimization and debugging
-- **Hugging Face Models**: Supports various Hugging Face models (default: `HuggingFaceH4/zephyr-7b-beta`)
+- **Ollama Integration**: Uses Ollama with DeepSeek R1 7B for advanced reasoning and tool calling
 - **Agent-Based Processing**: Uses LangGraph agents for intelligent question answering
 - **User-friendly Interface**: Clean Streamlit interface with cache management and settings
 - **CI/CD Pipeline**: Includes linting, testing, and automated workflows  
@@ -20,6 +20,18 @@ It processes PDF documents, creates embeddings, and uses Hugging Face models to 
 ---
 
 ## 🛠️ Installation
+
+### Prerequisites
+
+**Option 1: Local Development**
+1. **Install Ollama**: Download from [ollama.ai](https://ollama.ai)
+2. **Pull the model**: `ollama pull deepseek-r1:7b`
+
+**Option 2: Docker Deployment (Recommended)**
+1. **Install Docker**: Download from [docker.com](https://docker.com)
+2. **No additional setup needed** - Ollama and model are included in the container
+
+### Setup
 
 # Clone the repo
 ```
@@ -48,7 +60,8 @@ Create a `.env` file in the project root:
 ```bash
 # Hugging Face Configuration
 HF_TOKEN=your_huggingface_token
-HF_MODEL=HuggingFaceH4/zephyr-7b-beta
+# Ollama configuration (no API key needed for local models)
+OLLAMA_MODEL=deepseek-r1:7b
 
 # LangSmith Configuration (Optional - for tracing and monitoring)
 LANGCHAIN_API_KEY=your_langsmith_api_key_here
@@ -87,6 +100,45 @@ Or run directly with Streamlit:
 streamlit run faq_chatbot/app.py
 ```
 
+## 🐳 Docker Deployment
+
+### Quick Start with Docker Compose
+
+```bash
+# Clone and run
+git clone https://github.com/<USER>/<REPO>.git
+cd <REPO>
+docker-compose up --build
+```
+
+The application will be available at `http://localhost:8501`
+
+### Docker Commands
+
+```bash
+# Start the application
+docker-compose up --build
+
+# Run in background
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f
+
+# Stop the application
+docker-compose down
+```
+
+### Container Features
+
+- ✅ **Ollama pre-installed** with DeepSeek R1 7B
+- ✅ **Model persistence** between container restarts
+- ✅ **Automatic model download** on first run
+- ✅ **Health checks** for monitoring
+- ✅ **Resource limits** configured (8GB RAM)
+- ✅ **Full project mount** to `/work` for live development
+- ✅ **Data persistence** with named volumes
+
 ### Access the App
 Open your browser and go to: http://localhost:8501
 
@@ -120,17 +172,16 @@ faq-chatbot/
 │   ├── app.py                  # Main Streamlit application
 │   ├── agents.py               # LangGraph agent definitions and workflow
 │   ├── chat_handler.py         # Question processing and answer generation
-│   ├── hf_client.py            # Hugging Face model client configuration
-│   ├── utils.py                # Document processing, embeddings, and caching utilities
-│   └── embeddings.npy          # Pre-computed embeddings (if available)
+│   ├── local_models.py         # Hugging Face model client configuration
+│   ├── config.py               # Application configuration
+│   └── utils.py                # Document processing, embeddings, and caching utilities
 │
 ├── docs/                       # PDF documents for processing
 │   ├── AI ACT.pdf             # AI Act regulation document
 │   ├── GDPR.pdf               # GDPR regulation document
 │   └── faqs.json              # FAQ data (legacy format)
 │
-├── cache/                      # Vectorstore cache directory
-│   └── vectorstore_*.pkl       # Cached vectorstore files
+├── chroma_db/                  # ChromaDB persistent storage (auto-created)
 │
 ├── tests/                      # Test suite
 │   ├── __init__.py            # Test package initialization
@@ -145,7 +196,7 @@ faq-chatbot/
 ├── requirements.txt            # Python dependencies
 ├── setup.py                    # Package setup configuration
 ├── run_streamlit.py            # Streamlit app launcher
-├── test_hf_token.py            # Hugging Face token verification script
+├── LOCAL_MODELS_GUIDE.md       # Local models configuration guide
 ├── LANGSMITH_SETUP.md          # LangSmith configuration guide
 └── README.md                   # This file
 ```
@@ -156,8 +207,8 @@ faq-chatbot/
 - **`agents.py`**: LangGraph agent implementation for RAG workflow
 - **`chat_handler.py`**: Handles question processing and answer generation
 - **`utils.py`**: Core utilities for PDF processing, embeddings, and caching
-- **`hf_client.py`**: Hugging Face model client configuration
-- **`cache/`**: Stores processed vectorstores for faster loading
+- **`local_models.py`**: Hugging Face model client configuration
+- **`chroma_db/`**: Stores processed vectorstores for faster loading
 - **`docs/`**: Contains PDF documents that the chatbot processes
 
 ## 🔍 LangSmith Integration

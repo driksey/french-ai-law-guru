@@ -1,16 +1,12 @@
 import os
-import pickle
-import hashlib
 from pathlib import Path
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import Chroma
-import random
+from langchain_chroma import Chroma
+from .config import EMBEDDING_CONFIG, VECTORSTORE_CONFIG
 
-EMB_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-CACHE_DIR = Path("cache")
-CACHE_DIR.mkdir(exist_ok=True)
+EMB_MODEL = EMBEDDING_CONFIG["model_name"]
 
 
 def load_pdfs(path=str):
@@ -27,9 +23,24 @@ def preprocess_pdfs(pdfs):
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     docs = text_splitter.split_documents(pdfs)
     for doc in docs:
-        category = doc.metadata["source"].split("/")[-2]
+        # Extract the parent directory name from the file path
+        source_path = doc.metadata["source"]
+        
+        # Handle both Windows and Unix paths
+        if "/" in source_path:
+            path_parts = source_path.split("/")
+        else:
+            path_parts = source_path.split("\\")
+        
+        # Get the parent directory (the folder containing the PDF)
+        # If the path is like "docs/file.pdf", we want "docs"
+        if len(path_parts) >= 2:
+            category = path_parts[-2]  # Parent directory
+        else:
+            category = "unknown"  # Fallback if path structure is unexpected
+        
         doc.metadata = {
-            "source": doc.metadata["source"],
+            "source": source_path,
             "category": category
         }
     return docs
@@ -37,9 +48,19 @@ def preprocess_pdfs(pdfs):
 def store_docs_with_embeddings(docs):
     model = HuggingFaceEmbeddings(
         model_name=EMB_MODEL,
-        model_kwargs={"device": "cpu"}  
+        model_kwargs={"device": "cpu"},
+        encode_kwargs={
+            "batch_size": EMBEDDING_CONFIG["batch_size"],
+            "normalize_embeddings": EMBEDDING_CONFIG["normalize_embeddings"]
+        },
+        show_progress=EMBEDDING_CONFIG["show_progress"]
     )
-    vectorstore = Chroma.from_documents(docs, embedding=model, collection_name =f"docs_{random.random()}")
+    vectorstore = Chroma.from_documents(
+        docs, 
+        embedding=model, 
+        collection_name=VECTORSTORE_CONFIG["collection_name"],
+        persist_directory=VECTORSTORE_CONFIG["persist_directory"]
+    )
     return vectorstore
 
 
@@ -48,17 +69,9 @@ def retrieve_documents(query: str, retriever):
     return docs_retrieved
 
 
-def get_documents_hash(docs):
-    """Generate a hash based on document content and metadata."""
-    content = ""
-    for doc in docs:
-        content += doc.page_content + str(doc.metadata)
-    return hashlib.md5(content.encode()).hexdigest()
-
-
 def load_or_create_vectorstore(docs, cache_key=None):
     """
-    Load vectorstore from cache or create new one if cache is invalid.
+    Load vectorstore from persistent directory or create new one.
     
     Args:
         docs: List of documents to embed
@@ -67,68 +80,42 @@ def load_or_create_vectorstore(docs, cache_key=None):
     Returns:
         Chroma vectorstore
     """
-    if cache_key is None:
-        cache_key = get_documents_hash(docs)
+    from langchain_chroma import Chroma
     
-    cache_file = CACHE_DIR / f"vectorstore_{cache_key}.pkl"
+    persist_dir = VECTORSTORE_CONFIG["persist_directory"]
     
-    # Check if cache exists and is valid
-    if cache_file.exists():
-        try:
-            print("Loading vectorstore from cache...")
-            with open(cache_file, 'rb') as f:
-                cached_data = pickle.load(f)
+    # Try to load existing persistent vectorstore
+    try:
+        if Path(persist_dir).exists():
+            print("Loading existing vectorstore from persistent directory...")
+            model = HuggingFaceEmbeddings(
+                model_name=EMB_MODEL,
+                model_kwargs={"device": "cpu"},
+                encode_kwargs={
+                    "batch_size": EMBEDDING_CONFIG["batch_size"],
+                    "normalize_embeddings": EMBEDDING_CONFIG["normalize_embeddings"]
+                },
+                show_progress=False  # No progress bar for loading
+            )
+            vectorstore = Chroma(
+                persist_directory=persist_dir,
+                embedding_function=model,
+                collection_name=VECTORSTORE_CONFIG["collection_name"]
+            )
             
-            # Verify the cached data is still valid
-            if cached_data.get('hash') == cache_key:
-                print("Cache loaded successfully!")
-                return cached_data['vectorstore']
+            # Test if the vectorstore has documents
+            test_results = vectorstore.similarity_search("test", k=1)
+            if test_results:
+                print("Existing vectorstore loaded successfully!")
+                return vectorstore
             else:
-                print("Cache invalid, recreating...")
-        except Exception as e:
-            print(f"Error loading cache: {e}, recreating...")
+                print("Empty vectorstore found, recreating...")
+    except Exception as e:
+        print(f"Error loading persistent vectorstore: {e}, creating new one...")
     
     # Create new vectorstore
     print("Creating new vectorstore (this may take a while)...")
     vectorstore = store_docs_with_embeddings(docs)
     
-    # Save to cache
-    try:
-        cache_data = {
-            'vectorstore': vectorstore,
-            'hash': cache_key
-        }
-        with open(cache_file, 'wb') as f:
-            pickle.dump(cache_data, f)
-        print("Vectorstore cached successfully!")
-    except Exception as e:
-        print(f"Could not save cache: {e}")
-    
     return vectorstore
-
-
-def clear_cache():
-    """Clear all cached vectorstores."""
-    import shutil
-    if CACHE_DIR.exists():
-        shutil.rmtree(CACHE_DIR)
-        CACHE_DIR.mkdir(exist_ok=True)
-        print("Cache cleared successfully!")
-    else:
-        print("No cache to clear.")
-
-
-def get_cache_info():
-    """Get information about cached files."""
-    if not CACHE_DIR.exists():
-        return "No cache directory found."
-    
-    cache_files = list(CACHE_DIR.glob("vectorstore_*.pkl"))
-    if not cache_files:
-        return "No cached vectorstores found."
-    
-    total_size = sum(f.stat().st_size for f in cache_files)
-    size_mb = total_size / (1024 * 1024)
-    
-    return f"Found {len(cache_files)} cached vectorstore(s), total size: {size_mb:.2f} MB"
 

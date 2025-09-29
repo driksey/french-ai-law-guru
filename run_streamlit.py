@@ -1,3 +1,5 @@
-import streamlit.web.bootstrap
+import subprocess
+import sys
 
-streamlit.web.bootstrap.run("faq_chatbot/app.py", "", [], {})
+if __name__ == "__main__":
+    subprocess.run([sys.executable, "-m", "streamlit", "run", "faq_chatbot/app.py"])

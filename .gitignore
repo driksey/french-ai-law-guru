@@ -43,6 +43,21 @@ venv.bak/
 # ~/.cache/huggingface/hub
 .huggingface/
 
+# ChromaDB persistent storage
+chroma_db/
+
+# Cache directories
+cache/
+*.pkl
+
+# Pre-computed embeddings
+*.npy
+
+# Docker volumes and data
+docker-data/
+volumes/
+.docker/
+
 # OS-specific
 .DS_Store
 Thumbs.db

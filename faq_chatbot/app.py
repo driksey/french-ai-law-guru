@@ -1,11 +1,12 @@
 # app.py
-import os
 import streamlit as st
 from dotenv import load_dotenv
-from faq_chatbot.utils import load_pdfs, preprocess_pdfs, load_or_create_vectorstore, get_cache_info, clear_cache
-from faq_chatbot.hf_client import create_huggingface_client
+from faq_chatbot.utils import load_pdfs, preprocess_pdfs, load_or_create_vectorstore
+from faq_chatbot.local_models import create_local_llm, get_model_info
 from faq_chatbot.agents import create_rag_agent
-from faq_chatbot.chat_handler import process_question_with_agent, get_retrieved_documents
+from faq_chatbot.chat_handler import process_question_with_agent
+from faq_chatbot.utils import retrieve_documents
+from faq_chatbot.config import APP_CONFIG
 import sys
 from pathlib import Path
 
@@ -13,57 +14,72 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 load_dotenv()
 
-st.set_page_config(page_title="AI Regulation Chatbot", layout="centered")
-st.title("FAQ Chatbot")
+st.set_page_config(page_title=APP_CONFIG["title"], layout=APP_CONFIG["page_layout"])
+st.title("AI Regulations Chatbot")
 
 with st.sidebar:
-    st.markdown("## Settings")
-    model = os.getenv("HF_MODEL", "HuggingFaceH4/zephyr-7b-beta")
-    st.write(f"Model: {model}")
-    top_k = st.slider("Number of doc snippets to include", 1, 5, 3)
+    st.markdown("## 🏠 Local Model Settings")
     
-    st.markdown("## LangSmith Tracing")
-    st.info("LangSmith tracing is enabled. Check your LangSmith dashboard to monitor performance and debug issues.")
+    # Model configuration
+    st.markdown("### Model Configuration")
+    st.info("🚀 Using DeepSeek R1 7B via Ollama (~4-6GB RAM)")
     
-    # Show LangSmith project info
-    langsmith_project = os.getenv("LANGCHAIN_PROJECT", "faq-chatbot")
-    st.write(f"Project: {langsmith_project}")
+    # Show model information
+    model_info = get_model_info()
+    from faq_chatbot.config import LLM_CONFIG
+    st.markdown(f"**Model:** {LLM_CONFIG['model_name']}")
+    st.markdown(f"- Size: {model_info['size']}")
+    st.markdown(f"- RAM Required: {model_info['ram_required']}")
+    st.markdown(f"- Description: {model_info['description']}")
+    st.markdown(f"- Backend: Ollama (Local)")
     
-    # Add link to LangSmith dashboard
-    st.markdown(f"[Open LangSmith Dashboard](https://smith.langchain.com/projects)")
+    top_k = st.slider(
+        "Number of doc snippets to include", 
+        1, 
+        APP_CONFIG["max_top_k"], 
+        APP_CONFIG["default_top_k"]
+    )
     
-    st.markdown("## Cache Management")
-    cache_info = get_cache_info()
-    st.info(f"{cache_info}")
-    
-    if st.button("Clear Cache"):
-        clear_cache()
-        st.success("Cache cleared! Restart the app to recreate embeddings.")
-        st.rerun()
 
-# Initialize document processing with caching
 path = "docs"
 docs = load_pdfs(path)
 docs_processed = preprocess_pdfs(docs)
 
-# Use cached vectorstore or create new one
-with st.spinner("Loading documents and embeddings..."):
-    vectorstore = load_or_create_vectorstore(docs_processed)
-    retriever = vectorstore.as_retriever(search_kwargs={"k": top_k})
+@st.cache_resource
+def get_vectorstore_and_retriever(docs_processed, top_k):
+    """Cache the vectorstore and retriever creation."""
+    return load_or_create_vectorstore(docs_processed), load_or_create_vectorstore(docs_processed).as_retriever(search_kwargs={"k": top_k})
 
-# Create RAG agent
-chat_model = create_huggingface_client()
-agent = create_rag_agent(chat_model, retriever)
+@st.cache_resource
+def get_chat_model():
+    """Cache the chat model creation."""
+    return create_local_llm()
+
+@st.cache_resource
+def get_rag_agent(_chat_model, _retriever, top_k):
+    """Cache the RAG agent creation."""
+    return create_rag_agent(_chat_model, _retriever)
+
+with st.spinner("Loading documents and embeddings..."):
+    vectorstore, retriever = get_vectorstore_and_retriever(docs_processed, top_k)
+
+chat_model = get_chat_model()
+
+if chat_model is None:
+    st.error("Failed to load DeepSeek R1 model via Ollama. Please ensure:")
+    st.markdown("1. **Ollama is installed and running**")
+    st.markdown("2. **Model is installed**: Run `ollama pull deepseek-r1:7b`")
+    st.markdown("3. **Check system resources** (4-6GB RAM required)")
+    st.stop()
+
+agent = get_rag_agent(chat_model, retriever, top_k)
 
 question = st.text_input("Ask the chatbot a question about the AI regulations in France")
 
 if st.button("Ask") and question:
     with st.spinner("Generating answer..."):
-        # Utiliser l'agent pour générer une réponse
         answer = process_question_with_agent(agent, question)
-        
-        # Récupérer les documents utilisés
-        retrieved_docs = get_retrieved_documents(retriever, question)
+        retrieved_docs = retrieve_documents(question, retriever)
 
     st.markdown("**Answer**")
     st.write(answer)
