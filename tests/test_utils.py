@@ -1,12 +1,41 @@
-from legal_ai_assistant.utils import top_k_similar, build_embeddings_if_needed
+import tempfile
 
-def test_top_k_similar_tmp(tmp_path):
-    faqs = [
-        {"question":"How to pay?","answer":"By card"},
-        {"question":"Refund policy","answer":"30 days"}
+from legal_ai_assistant.utils import load_pdfs, preprocess_pdfs
+
+
+def test_load_pdfs_empty_directory():
+    """Test loading PDFs from an empty directory."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        pdfs = load_pdfs(temp_dir)
+        assert len(pdfs) == 0
+
+
+def test_preprocess_pdfs_empty_list():
+    """Test preprocessing an empty list of PDFs."""
+    docs = preprocess_pdfs([])
+    assert len(docs) == 0
+
+
+def test_preprocess_pdfs_with_mock_docs():
+    """Test preprocessing with mock document data."""
+    # Create mock documents
+    class MockDoc:
+        def __init__(self, content, source):
+            self.page_content = content
+            self.metadata = {"source": source}
+
+    mock_docs = [
+        MockDoc("Test content 1", "legal_docs/test1.pdf"),
+        MockDoc("Test content 2", "legal_docs/test2.pdf")
     ]
-    p = tmp_path / "faqs.json"
-    p.write_text(str(faqs))
-    embeddings = build_embeddings_if_needed(faqs, emb_path=str(tmp_path/"emb.npy"))
-    res = top_k_similar("payment", faqs, embeddings, k=1)
-    assert len(res) == 1
+
+    # Test preprocessing
+    processed_docs = preprocess_pdfs(mock_docs)
+
+    # Verify that documents have been processed
+    assert len(processed_docs) > 0
+
+    # Check that metadata has been updated
+    for doc in processed_docs:
+        assert "category" in doc.metadata
+        assert doc.metadata["category"] == "legal_docs"

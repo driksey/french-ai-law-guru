@@ -1,20 +1,19 @@
 # agents.py
+
+from langchain.agents import Tool
 from langchain_core.messages import ToolMessage
 from langchain_core.prompts import ChatPromptTemplate
-from langgraph.graph import START, END, MessagesState, StateGraph
-from langchain.agents import Tool
-from legal_ai_assistant.utils import retrieve_documents
+from langgraph.graph import END, START, MessagesState, StateGraph
 from pydantic import BaseModel, Field
-from typing import Optional
-import json
-import re
+
+from legal_ai_assistant.utils import retrieve_documents
 
 
 class ToolCallSchema(BaseModel):
     """Schema for structured tool calling."""
     name: str = Field(description="The name of the function to call")
     arguments: dict = Field(description="The arguments for the function call")
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -28,7 +27,7 @@ class ToolCallSchema(BaseModel):
 
 class BasicToolNode:
     """Node for executing tools in the agent workflow."""
-    
+
     def __init__(self, tools: list) -> None:
         self.tools_by_name = {tool.name: tool for tool in tools}
 
@@ -88,7 +87,7 @@ def call_model(state: MessagesState, chat_model, tools):
     """Call the model with tools bound."""
     if chat_model is None:
         raise ValueError("Chat model is None. Please check if the model loaded correctly.")
-    
+
     prompt = create_prompt()
     chat_model_with_tools = chat_model.bind_tools(tools)
     chat_model_with_prompt = prompt | chat_model_with_tools
@@ -104,14 +103,14 @@ def route_tools(state: MessagesState):
         ai_message = messages[-1]
     else:
         raise ValueError(f"No messages found in input state to tool_edge: {state}")
-    
+
     print(f"[DEBUG] Routing decision for message: {type(ai_message).__name__}")
-    
+
     # Check for traditional tool calls
     if hasattr(ai_message, "tool_calls") and ai_message.tool_calls and len(ai_message.tool_calls) > 0:
         print("[OK] Traditional tool calls detected")
         return "tools"
-    
+
 
     print("[INFO] No tool calls detected, ending conversation")
     return END
@@ -121,17 +120,17 @@ def create_rag_tool(retriever):
     """Create a RAG tool for document retrieval with explicit schema."""
     return Tool(
         name="tool_rag",
-        description="""ESSENTIAL tool to search for relevant information in AI regulation documents. 
-        
+        description="""ESSENTIAL tool to search for relevant information in AI regulation documents.
+
         Schema:
         - name: tool_rag
         - parameters: {"query": "string"}
         - description: Search for relevant information in AI regulation documents
-        
+
         Usage: ALWAYS use this tool first before answering any question.
         Input: A question or search query about AI regulations in France.
         Output: Relevant document excerpts that help answer the question.
-        
+
         Example: tool_rag(query="What are the AI Act requirements?")""",
         func=lambda query: retrieve_documents(query, retriever)
     )
@@ -146,10 +145,10 @@ def create_rag_agent(chat_model, retriever):
 def define_graph(chat_model, tools):
     """Define the agent workflow graph with structured output."""
     workflow = StateGraph(MessagesState)
-    
+
     def call_model_with_tools(state):
         return call_model(state, chat_model, tools)
-    
+
     workflow.add_node("model", call_model_with_tools)
 
     tool_node = BasicToolNode(tools=tools)

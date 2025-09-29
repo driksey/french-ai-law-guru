@@ -28,7 +28,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
@@ -36,10 +36,12 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
 
-      - name: Run linter
+      - name: Install dev dependencies
         run: |
-          pip install ruff
-          ruff check .
+          pip install -r requirements-dev.txt
+
+      - name: Run linter
+        run: ruff check .
 
       - name: Run tests
         run: pytest --maxfail=1 --disable-warnings -q

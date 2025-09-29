@@ -1,6 +1,6 @@
-# Legal AI Assistant 🤖
+# French AI Law Guru 🤖
 
-![CI - main](https://github.com/driksey/legal-ai-assistant/actions/workflows/ci.yml/badge.svg?branch=main) ![CI - develop](https://github.com/driksey/legal-ai-assistant/actions/workflows/ci.yml/badge.svg?branch=develop)
+![CI - main](https://github.com/driksey/french-ai-law-guru/actions/workflows/ci.yml/badge.svg?branch=main) ![CI - develop](https://github.com/driksey/french-ai-law-guru/actions/workflows/ci.yml/badge.svg?branch=develop)
 
 A sophisticated RAG (Retrieval-Augmented Generation) chatbot built with **Streamlit**, **LangChain**, and **LangGraph** for answering questions about AI regulations in France.  
 It processes PDF documents, creates embeddings, and uses Hugging Face models to generate contextual answers.
@@ -35,8 +35,8 @@ It processes PDF documents, creates embeddings, and uses Hugging Face models to 
 
 # Clone the repo
 ```
-git clone https://github.com/<USER>/legal-ai-assistant.git
-cd legal-ai-assistant
+git clone https://github.com/<USER>/french-ai-law-guru.git
+cd french-ai-law-guru
 ```
 
 # Create virtual environment

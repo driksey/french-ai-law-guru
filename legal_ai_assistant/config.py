@@ -41,8 +41,9 @@ VECTORSTORE_CONFIG = {
 
 # Configuration de l'application
 APP_CONFIG = {
-    "title": "AI Regulation Chatbot",
-    "page_layout": "centered",
+    "title": "French AI Law Guru",
+    "page_layout": "wide",
+    "initial_sidebar_state": "expanded",
     "max_top_k": 5,
     "default_top_k": 3,
 }

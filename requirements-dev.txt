@@ -1,0 +1,12 @@
+# Development dependencies
+# These are only needed for development, testing, and CI/CD
+
+# Linting and formatting
+ruff
+black
+
+# Testing
+pytest
+
+# Pre-commit hooks
+pre-commit

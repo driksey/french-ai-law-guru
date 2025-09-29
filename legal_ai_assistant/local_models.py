@@ -1,13 +1,14 @@
 # local_models.py
-import os
 from langchain_ollama import ChatOllama
+
 from .config import LLM_CONFIG
+
 
 def create_local_llm():
     """
     Create the configured LLM model using Ollama.
     Inspired by: https://github.com/kaymen99/local-rag-researcher-deepseek/tree/main
-    
+
     Returns:
         ChatOllama client
     """
@@ -20,15 +21,15 @@ def create_local_llm():
             num_predict=LLM_CONFIG["max_new_tokens"],
             verbose=True
         )
-        
-        print(f"✅ Ollama ChatOllama initialized successfully")
+
+        print("✅ Ollama ChatOllama initialized successfully")
         print(f"   Model: {model_name}")
         print(f"   Temperature: {LLM_CONFIG['temperature']}")
         print(f"   Max tokens: {LLM_CONFIG['max_new_tokens']}")
         print(f"   Description: {LLM_CONFIG['description']}")
-        
+
         return chat_model
-        
+
     except Exception as e:
         print(f"❌ Error creating Ollama client: {e}")
         print(f"Error type: {type(e).__name__}")
