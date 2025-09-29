@@ -17,22 +17,22 @@ LLM_CONFIG = {
     "repeat_penalty": 1.1,   # Évite les répétitions
 
     # Contexte
-    "context_window": 1024,  # Plus rapide que 2048, suffisant pour RAG
+    "context_window": 2048,  # Augmenté pour mémoire des appels tool_rag
     "use_cache": True,       # Active le cache pour accélérer la génération
-
+    
     # CPU optimization
     "num_threads": 6,        # Ajuster selon tes cores CPU
     "batch_size": 128,       # Batch modeste → meilleur équilibre vitesse/mémoire
-
+    
     # Paramètres Ollama spécifiques
-    "num_ctx": 1024,         # Context window pour Ollama
+    "num_ctx": 2048,         # Context window pour Ollama - augmenté
     "num_gpu": 0,            # Désactiver GPU
     "top_k": 20,             # Réduit pour vitesse
     "num_batch": 128,        # Batch size aligné avec batch_size
     "use_mmap": True,        # Memory mapping pour chargement rapide
     "use_mlock": False,      # Désactiver mlock sur CPU
     "low_vram": True,        # Optimiser pour faible mémoire
-    "num_keep": 1,           # Garder moins de tokens pour vitesse
+    "num_keep": 512,         # Garder plus de tokens pour mémoire contextuelle
     "tfs_z": 0.9,            # Tail free sampling réduit
     "typical_p": 0.8,        # Optimisation vitesse maximale
 
@@ -48,19 +48,21 @@ LLM_CONFIG = {
     }
 }
 
-# Configuration de l'embedding
+# Configuration de l'embedding - Optimisé pour multilingue FR/EN
 EMBEDDING_CONFIG = {
-    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "model_name": "sentence-transformers/distiluse-base-multilingual-cased",
     "batch_size": 32,
     "normalize_embeddings": True,
     "show_progress": True,
+    "description": "Modèle multilingue optimisé pour français-anglais",
+    "supported_languages": ["fr", "en", "de", "es", "it", "pt", "nl", "pl", "ru", "tr", "ar", "zh", "ja", "ko", "hi"],
 }
 
 # Configuration du vectorstore - Optimisée pour Llama 3.2 1B
 VECTORSTORE_CONFIG = {
     "collection_name": "faq_docs",
     "persist_directory": "./chroma_db",
-    "max_context_length": 400,  # Réduit pour vitesse maximale
+    "max_context_length": 800,  # Augmenté pour plus de contexte documentaire
 }
 
 # Configuration de l'application

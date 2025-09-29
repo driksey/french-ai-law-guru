@@ -30,10 +30,18 @@ It processes PDF documents, creates embeddings, and uses **Llama 3.2 1B** via Ol
 - **Performance**: Excellent for legal document analysis and Q&A on CPU with optimized memory usage
 - **Local Processing**: No external API calls required
 
+**Embeddings Multilingues**
+- **Model**: `distiluse-base-multilingual-cased`
+- **Size**: ~135MB
+- **Languages**: French, English, German, Spanish, Italian, Portuguese, Dutch, Polish, Russian, Turkish, Arabic, Chinese, Japanese, Korean, Hindi
+- **Cross-lingual Performance**: Excellent FR-EN semantic matching
+- **Features**: Optimized for multilingual document retrieval and cross-language Q&A
+
 > **⚡ Performance Optimized**: This quantized model prioritizes **speed and efficiency for optimal Q&A performance**. 
 > - **Speed**: Ultra-fast inference with optimized response times
 > - **Memory**: Efficient RAM usage with quantized model
 > - **Quality**: Excellent for legal document analysis and Q&A
+> - **Multilingual**: Support for French-English cross-lingual queries
 > - **Use Case**: Perfect for quick legal document queries and fast responses
 
 ---
@@ -101,6 +109,40 @@ LANGCHAIN_PROJECT=faq-chatbot
 LANGCHAIN_TRACING_V2=true
 LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
 ```
+
+## 🌍 Multilingual Support
+
+This application now supports **French-English cross-lingual queries**:
+
+- **Questions in French** → **Documents in English** ✅
+- **Questions in English** → **Documents in French** ✅
+- **Mixed language documents** ✅
+- **Automatic language matching** → **Responses in the same language as questions** ✅
+
+### Migration to Multilingual Embeddings
+
+If upgrading from the previous version, you need to regenerate the vectorstore:
+
+```bash
+# Delete old vectorstore to force re-embedding with multilingual model
+rm -rf chroma_db/
+```
+
+The new embedding model will be downloaded automatically on first run (~135MB).
+
+### Example Usage
+
+**French Question with English Documents:**
+- Question: "Quelles sont les exigences GDPR pour les applications d'IA ?"
+- Answer: "Les exigences GDPR pour les applications d'IA incluent..." (in French)
+
+**English Question with French Documents:**
+- Question: "What are the AI Act requirements for transparency?"
+- Answer: "The AI Act requirements for transparency include..." (in English)
+
+**Automatic Language Detection:**
+- The system automatically detects the language of your question and responds in the same language
+- Works with French, English, and other supported languages
 
 ### Getting API Keys
 
@@ -277,18 +319,20 @@ This application is optimized for **ultra-fast inference** using the Llama 3.2 1
 
 | Aspect | Llama 3.2 1B Quantified |
 |--------|-------------------------|
-| **Inference Time** | 5-10 seconds |
+| **Inference Time** | 8-15 seconds |
 | **Model Size** | 1.1GB |
-| **RAM Required** | ≈2GB |
+| **RAM Required** | ≈2.5GB |
+| **Context Window** | 2048 tokens |
 | **Response Quality** | Excellent for Q&A |
-| **Use Case** | Fast legal document analysis |
+| **Use Case** | Fast legal document analysis with memory |
 
 ### Performance Features
 
-- **Ultra-fast responses**: Optimized for quick Q&A interactions
+- **Fast responses**: Optimized for Q&A interactions with context memory
 - **Memory efficient**: Quantized model with optimal RAM usage
 - **CPU optimized**: Configured for maximum performance on CPU-only systems
-- **Stateless design**: Each question processed independently for optimal speed
+- **Context awareness**: Remembers previous tool_rag calls within conversation
+- **Document retrieval**: Enhanced context window for better document analysis
 
 ## 🐳 Docker Support
 

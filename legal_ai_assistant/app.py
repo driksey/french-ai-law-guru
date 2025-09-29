@@ -53,9 +53,9 @@ docs_processed = preprocess_pdfs(docs)
 
 
 @st.cache_resource
-def get_vectorstore_and_retriever(docs_processed, top_k):
+def get_vectorstore_and_retriever(_docs_processed, top_k):
     """Cache the vectorstore and retriever creation."""
-    return load_or_create_vectorstore(docs_processed), load_or_create_vectorstore(docs_processed).as_retriever(search_kwargs={"k": top_k})
+    return load_or_create_vectorstore(_docs_processed), load_or_create_vectorstore(_docs_processed).as_retriever(search_kwargs={"k": top_k})
 
 
 @st.cache_resource
