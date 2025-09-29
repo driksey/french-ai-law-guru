@@ -35,33 +35,36 @@ RUN pip install --no-cache-dir \
 # Copier l'application
 COPY . /work
 
-# Créer le script de démarrage
-RUN echo '#!/bin/bash\n\
-set -e\n\
-\n\
-echo "Starting Ollama service..."\n\
-ollama serve &\n\
-\n\
-echo "Waiting for Ollama to start..."\n\
-for i in {1..30}; do\n\
-  if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then\n\
-    echo "Ollama is ready!"\n\
-    break\n\
-  fi\n\
-  echo "Attempt $i/30: Ollama not ready yet, waiting..."\n\
-  sleep 2\n\
-done\n\
-\n\
-if ollama list | grep -q "llama3.1:8b"; then\n\
-  echo "Llama 3.1:8b model already installed"\n\
-else\n\
-  echo "Pulling Llama 3.1:8b model..."\n\
-  ollama pull llama3.1:8b\n\
-fi\n\
-\n\
-echo "Starting Streamlit application..."\n\
-streamlit run run_streamlit.py --server.port=8501 --server.address=0.0.0.0\n\
-' > start.sh && chmod +x start.sh
+# Créer le script de démarrage avec une méthode plus robuste
+RUN cat > start.sh << 'EOF'
+#!/bin/bash
+set -e
+
+echo "Starting Ollama service..."
+ollama serve &
+
+echo "Waiting for Ollama to start..."
+for i in {1..30}; do
+  if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
+    echo "Ollama is ready!"
+    break
+  fi
+  echo "Attempt $i/30: Ollama not ready yet, waiting..."
+  sleep 2
+done
+
+if ollama list | grep -q "llama3.1:8b"; then
+  echo "Llama 3.1:8b model already installed"
+else
+  echo "Pulling Llama 3.1:8b model..."
+  ollama pull llama3.1:8b
+fi
+
+echo "Starting Streamlit application..."
+streamlit run run_streamlit.py --server.port=8501 --server.address=0.0.0.0
+EOF
+
+RUN chmod +x start.sh
 
 ENV PORT=8501
 EXPOSE 8501
