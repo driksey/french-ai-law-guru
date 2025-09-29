@@ -14,12 +14,26 @@ def create_local_llm():
     """
     model_name = LLM_CONFIG["model_name"]
     try:
-        # Create ChatOllama instance
+        # Create ChatOllama instance with all parameters from LLM_CONFIG
         chat_model = ChatOllama(
             model=model_name,
             temperature=LLM_CONFIG["temperature"],
             num_predict=LLM_CONFIG["max_new_tokens"],
-            verbose=True
+            verbose=True,
+            # All parameters from LLM_CONFIG
+            num_ctx=LLM_CONFIG["num_ctx"],
+            num_thread=LLM_CONFIG["num_threads"],
+            num_gpu=LLM_CONFIG["num_gpu"],
+            repeat_penalty=LLM_CONFIG["repeat_penalty"],
+            top_k=LLM_CONFIG["top_k"],
+            top_p=LLM_CONFIG["top_p"],
+            num_batch=LLM_CONFIG["num_batch"],
+            use_mmap=LLM_CONFIG["use_mmap"],
+            use_mlock=LLM_CONFIG["use_mlock"],
+            low_vram=LLM_CONFIG["low_vram"],
+            num_keep=LLM_CONFIG["num_keep"],
+            tfs_z=LLM_CONFIG["tfs_z"],
+            typical_p=LLM_CONFIG["typical_p"],
         )
 
         print("✅ Ollama ChatOllama initialized successfully")
@@ -39,6 +53,7 @@ def create_local_llm():
         traceback.print_exc()
         return None
 
+
 def get_model_info():
     """Get information about the configured model."""
     return {
@@ -46,4 +61,3 @@ def get_model_info():
         "ram_required": LLM_CONFIG["ram_required"],
         "description": LLM_CONFIG["description"]
     }
-

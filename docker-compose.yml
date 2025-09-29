@@ -8,7 +8,7 @@ services:
     ports:
       - "8501:8501"
     environment:
-      - OLLAMA_MODEL=llama3.1:8b
+      - OLLAMA_MODEL=llama3.2:1b-instruct-q4_K_M
       - LANGCHAIN_TRACING_V2=false
     volumes:
       # Persist Ollama models between container restarts
