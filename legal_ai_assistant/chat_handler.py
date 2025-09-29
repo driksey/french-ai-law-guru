@@ -38,5 +38,3 @@ def process_question_with_agent(agent, question):
     answer_with_timing = f"{answer}\n\n*Response time: {execution_time:.2f} seconds*"
 
     return answer_with_timing
-
-

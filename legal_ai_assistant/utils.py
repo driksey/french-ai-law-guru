@@ -47,6 +47,7 @@ def preprocess_pdfs(pdfs):
         }
     return docs
 
+
 def store_docs_with_embeddings(docs):
     model = HuggingFaceEmbeddings(
         model_name=EMB_MODEL,
@@ -120,4 +121,3 @@ def load_or_create_vectorstore(docs, cache_key=None):
     vectorstore = store_docs_with_embeddings(docs)
 
     return vectorstore
-

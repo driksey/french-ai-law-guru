@@ -28,7 +28,7 @@ with st.sidebar:
 
     # Model configuration
     st.markdown("### Model Configuration")
-    st.info("🚀 Using Llama 3.2 1B via Ollama (~2-3GB RAM)")
+    st.info("🚀 Using Llama 3.2 1B Quantifié via Ollama (~2GB RAM)")
 
     # Show model information
     model_info = get_model_info()
@@ -51,20 +51,24 @@ path = "legal_docs"
 docs = load_pdfs(path)
 docs_processed = preprocess_pdfs(docs)
 
+
 @st.cache_resource
 def get_vectorstore_and_retriever(docs_processed, top_k):
     """Cache the vectorstore and retriever creation."""
     return load_or_create_vectorstore(docs_processed), load_or_create_vectorstore(docs_processed).as_retriever(search_kwargs={"k": top_k})
+
 
 @st.cache_resource
 def get_chat_model():
     """Cache the chat model creation."""
     return create_local_llm()
 
+
 @st.cache_resource
 def get_rag_agent(_chat_model, _retriever, top_k):
     """Cache the RAG agent creation."""
     return create_rag_agent(_chat_model, _retriever)
+
 
 with st.spinner("Loading documents and embeddings..."):
     vectorstore, retriever = get_vectorstore_and_retriever(docs_processed, top_k)
@@ -72,10 +76,10 @@ with st.spinner("Loading documents and embeddings..."):
 chat_model = get_chat_model()
 
 if chat_model is None:
-    st.error("Failed to load Llama 3.2 1B model via Ollama. Please ensure:")
+    st.error("Failed to load Llama 3.2 1B Quantifié model via Ollama. Please ensure:")
     st.markdown("1. **Ollama is installed and running**")
-    st.markdown("2. **Model is installed**: Run `ollama pull llama3.2:1b`")
-    st.markdown("3. **Check system resources** (2-3GB RAM required)")
+    st.markdown("2. **Model is installed**: Run `ollama pull llama3.2:1b-instruct-q4_K_M`")
+    st.markdown("3. **Check system resources** (≈2GB RAM required)")
     st.stop()
 
 agent = get_rag_agent(chat_model, retriever, top_k)
@@ -91,4 +95,4 @@ if st.button("Ask") and question:
     st.write(answer)
     st.markdown("**Sources used**")
     for i, doc in enumerate(retrieved_docs):
-        st.write(f"- Document {i+1}: {doc.metadata.get('source', 'Unknown source')}")
+        st.write(f"- Document {i + 1}: {doc.metadata.get('source', 'Unknown source')}")

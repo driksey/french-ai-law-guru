@@ -51,9 +51,8 @@ class BasicToolNode:
         return {"messages": outputs}
 
 
-
 def create_prompt():
-    """Create the system prompt optimized for fast inference."""
+    """Create the system prompt optimized for speed."""
     return ChatPromptTemplate.from_messages([
         ("system", """AI assistant for French AI regulations. Use tool_rag for all questions.
 
@@ -65,7 +64,7 @@ WORKFLOW:
 
 FORMAT: {{"name": "tool_rag", "arguments": {{"query": "question"}}}}
 
-Keep responses concise and focused."""),
+IMPORTANT: Keep responses concise and focused. Limit response to maximum 300 tokens."""),
         ("placeholder", "{history}"),
     ])
 
@@ -97,7 +96,6 @@ def route_tools(state: MessagesState):
     if hasattr(ai_message, "tool_calls") and ai_message.tool_calls and len(ai_message.tool_calls) > 0:
         print("[OK] Traditional tool calls detected")
         return "tools"
-
 
     print("[INFO] No tool calls detected, ending conversation")
     return END
