@@ -3,7 +3,7 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "legal-ai-assistant"
+name = "french-ai-law-guru"
 version = "0.1.0"
 description = "AI-powered legal assistant for French regulations"
 authors = [{name = "Your Name", email = "your.email@example.com"}]
@@ -20,6 +20,8 @@ classifiers = [
 [tool.ruff]
 target-version = "py311"
 line-length = 88
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -34,8 +36,9 @@ ignore = [
     "B008",  # do not perform function calls in argument defaults
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+"*.ipynb" = ["ALL"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

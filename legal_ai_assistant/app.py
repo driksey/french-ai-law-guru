@@ -1,29 +1,35 @@
 # app.py
-import streamlit as st
-from dotenv import load_dotenv
-from legal_ai_assistant.utils import load_pdfs, preprocess_pdfs, load_or_create_vectorstore
-from legal_ai_assistant.local_models import create_local_llm, get_model_info
-from legal_ai_assistant.agents import create_rag_agent
-from legal_ai_assistant.chat_handler import process_question_with_agent
-from legal_ai_assistant.utils import retrieve_documents
-from legal_ai_assistant.config import APP_CONFIG
 import sys
 from pathlib import Path
+
+import streamlit as st
+from dotenv import load_dotenv
+
+from legal_ai_assistant.agents import create_rag_agent
+from legal_ai_assistant.chat_handler import process_question_with_agent
+from legal_ai_assistant.config import APP_CONFIG
+from legal_ai_assistant.local_models import create_local_llm, get_model_info
+from legal_ai_assistant.utils import (
+    load_or_create_vectorstore,
+    load_pdfs,
+    preprocess_pdfs,
+    retrieve_documents,
+)
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 load_dotenv()
 
 st.set_page_config(page_title=APP_CONFIG["title"], layout=APP_CONFIG["page_layout"])
-st.title("Legal AI Assistant")
+st.title("French AI Law Guru")
 
 with st.sidebar:
     st.markdown("## 🏠 Local Model Settings")
-    
+
     # Model configuration
     st.markdown("### Model Configuration")
     st.info("🚀 Using Llama 3.1 8B via Ollama (~6-8GB RAM)")
-    
+
     # Show model information
     model_info = get_model_info()
     from legal_ai_assistant.config import LLM_CONFIG
@@ -31,15 +37,15 @@ with st.sidebar:
     st.markdown(f"- Size: {model_info['size']}")
     st.markdown(f"- RAM Required: {model_info['ram_required']}")
     st.markdown(f"- Description: {model_info['description']}")
-    st.markdown(f"- Backend: Ollama (Local)")
-    
+    st.markdown("- Backend: Ollama (Local)")
+
     top_k = st.slider(
-        "Number of doc snippets to include", 
-        1, 
-        APP_CONFIG["max_top_k"], 
+        "Number of doc snippets to include",
+        1,
+        APP_CONFIG["max_top_k"],
         APP_CONFIG["default_top_k"]
     )
-    
+
 
 path = "legal_docs"
 docs = load_pdfs(path)

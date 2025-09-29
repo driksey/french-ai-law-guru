@@ -1,6 +1,6 @@
 version: '3.8'
 
-name: legal-ai-assistant
+name: french-ai-law-guru
 
 services:
   chatbot:
