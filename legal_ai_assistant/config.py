@@ -5,13 +5,13 @@ Configuration centralisée pour le chatbot FAQ
 
 # Configuration du modèle LLM - Optimisée pour CPU uniquement
 LLM_CONFIG = {
-    "model_name": "llama3.2:3b",
-    "size": "~2.0GB (Ollama optimized)",
-    "ram_required": "3-5GB",  # RAM nécessaire pour Llama 3.2 3B
-    "description": "Llama 3.2 3B - Fast CPU-optimized inference with tool calling support",
-    "max_new_tokens": 200,  # Plus de tokens pour Llama 3.2 3B
+    "model_name": "llama3.2:1b",
+    "size": "~1.3GB (Ollama optimized)",
+    "ram_required": "2-3GB",  # RAM nécessaire pour Llama 3.2 1B
+    "description": "Llama 3.2 1B - Ultra-fast CPU-optimized inference with tool calling support",
+    "max_new_tokens": 200,  # Plus de tokens pour Llama 3.2 1B
     "temperature": 0.1,
-    "context_window": 4096,  # Contexte plus large pour Llama 3.2 3B
+    "context_window": 2048,  # Réduit pour vitesse maximale
     "num_threads": 6,        # Plus de threads CPU
     "batch_size": 256,       # Batch plus petit pour CPU
     "quantization": {
@@ -35,12 +35,11 @@ EMBEDDING_CONFIG = {
     "show_progress": True,
 }
 
-# Configuration du vectorstore - Optimisée pour Llama 3.2 3B
+# Configuration du vectorstore - Optimisée pour Llama 3.2 1B
 VECTORSTORE_CONFIG = {
     "collection_name": "faq_docs",
     "persist_directory": "./chroma_db",
-    "default_top_k": 3,  # Trois documents pour Llama 3.2 3B
-    "max_context_length": 1200,  # Contexte plus large pour Llama 3.2 3B
+    "max_context_length": 800,  # Réduit pour vitesse maximale
 }
 
 # Configuration de l'application

@@ -3,7 +3,7 @@
 ![CI - main branch](https://github.com/driksey/french-ai-law-guru/actions/workflows/ci.yml/badge.svg?branch=main&label=main) ![CI - develop branch](https://github.com/driksey/french-ai-law-guru/actions/workflows/ci.yml/badge.svg?branch=develop&label=develop)
 
 A sophisticated RAG (Retrieval-Augmented Generation) chatbot built with **Streamlit**, **LangChain**, and **LangGraph** for answering questions about AI regulations in France.  
-It processes PDF documents, creates embeddings, and uses **Llama 3.2 3B** via Ollama to generate contextual answers with fast CPU-optimized inference and tool calling support.
+It processes PDF documents, creates embeddings, and uses **Llama 3.2 1B** via Ollama to generate contextual answers with ultra-fast CPU-optimized inference and tool calling support.
 
 ---
 
@@ -12,8 +12,8 @@ It processes PDF documents, creates embeddings, and uses **Llama 3.2 3B** via Ol
 - **Advanced RAG Architecture**: Uses LangChain and LangGraph for sophisticated document retrieval and generation
 - **Vectorstore Caching**: Intelligent caching system to speed up document loading and embedding creation
 - **LangSmith Integration**: Built-in tracing and monitoring for performance optimization and debugging
-- **Ollama Integration**: Uses Ollama with Llama 3.2 3B for fast CPU inference and tool calling
-- **Local LLM**: Runs entirely locally with Llama 3.2 3B (~2.0GB) - no external API dependencies
+- **Ollama Integration**: Uses Ollama with Llama 3.2 1B for ultra-fast CPU inference and tool calling
+- **Local LLM**: Runs entirely locally with Llama 3.2 1B (~1.3GB) - no external API dependencies
 - **Agent-Based Processing**: Uses LangGraph agents for intelligent question answering
 - **User-friendly Interface**: Clean Streamlit interface with cache management and settings
 - **CI/CD Pipeline**: Includes linting, testing, and automated workflows  
@@ -22,12 +22,17 @@ It processes PDF documents, creates embeddings, and uses **Llama 3.2 3B** via Ol
 
 ## 🤖 Model Specifications
 
-**Llama 3.2 3B via Ollama**
-- **Model Size**: ~2.0GB (optimized by Ollama)
-- **RAM Required**: 3-5GB
-- **Features**: Fast inference, tool calling support, RAG optimization
+**Llama 3.2 1B via Ollama**
+- **Model Size**: ~1.3GB (optimized by Ollama)
+- **RAM Required**: 2-3GB
+- **Features**: Ultra-fast inference, tool calling support, RAG optimization
 - **Performance**: Excellent for legal document analysis and Q&A on CPU
 - **Local Processing**: No external API calls required
+
+> **⚡ Performance vs Quality Trade-off**: This model prioritizes **speed over detailed responses**. 
+> - **Speed**: 4-6x faster than 3B models (8-15 seconds vs 60+ seconds)
+> - **Quality**: Good for Q&A, slightly less detailed than larger models
+> - **Use Case**: Perfect for quick legal document queries and fast responses
 
 ---
 
@@ -37,7 +42,7 @@ It processes PDF documents, creates embeddings, and uses **Llama 3.2 3B** via Ol
 
 **Option 1: Local Development**
 1. **Install Ollama**: Download from [ollama.ai](https://ollama.ai)
-2. **Pull the model**: `ollama pull llama3.2:3b`
+2. **Pull the model**: `ollama pull llama3.2:1b`
 
 **Option 2: Docker Deployment (Recommended)**
 1. **Install Docker**: Download from [docker.com](https://docker.com)
@@ -73,7 +78,7 @@ Create a `.env` file in the project root:
 # Hugging Face Configuration
 HF_TOKEN=your_huggingface_token
 # Ollama configuration (no API key needed for local models)
-OLLAMA_MODEL=llama3.2:3b
+OLLAMA_MODEL=llama3.2:1b
 
 # LangSmith Configuration (Optional - for tracing and monitoring)
 LANGCHAIN_API_KEY=your_langsmith_api_key_here
@@ -143,7 +148,7 @@ docker-compose down
 
 ### Container Features
 
-- ✅ **Ollama pre-installed** with Llama 3.2 3B
+- ✅ **Ollama pre-installed** with Llama 3.2 1B
 - ✅ **Model persistence** between container restarts
 - ✅ **Automatic model download** on first run
 - ✅ **Health checks** for monitoring
@@ -219,7 +224,7 @@ french-ai-law-guru/
 - **`agents.py`**: LangGraph agent implementation for RAG workflow
 - **`chat_handler.py`**: Handles question processing and answer generation
 - **`utils.py`**: Core utilities for PDF processing, embeddings, and caching
-- **`local_models.py`**: Ollama model client configuration for Llama 3.2 3B
+- **`local_models.py`**: Ollama model client configuration for Llama 3.2 1B
 - **`config.py`**: Centralized configuration including LLM and embedding settings
 - **`chroma_db/`**: Stores processed vectorstores for faster loading
 - **`legal_docs/`**: Contains PDF documents that the chatbot processes
@@ -247,7 +252,35 @@ This chatbot includes built-in LangSmith integration for monitoring, tracing, an
 ### Advanced Configuration
 For detailed setup instructions, see the configuration files in the project.
 
-> **💡 Tip**: The app automatically uses the `llama3.2:3b` model configured in `legal_ai_assistant/config.py`. You can modify the model settings there if needed.
+> **💡 Tip**: The app automatically uses the `llama3.2:1b` model configured in `legal_ai_assistant/config.py`. You can modify the model settings there if needed.
+
+## ⚡ Performance Optimization
+
+This application is optimized for **ultra-fast inference** using the Llama 3.2 1B model:
+
+### Speed vs Quality Trade-off
+
+| Aspect | Llama 3.2 1B (Current) | Llama 3.2 3B (Alternative) |
+|--------|------------------------|----------------------------|
+| **Inference Time** | 8-15 seconds | 60+ seconds |
+| **Model Size** | 1.3GB | 2.0GB |
+| **RAM Required** | 2-3GB | 3-5GB |
+| **Response Quality** | Good (concise) | Excellent (detailed) |
+| **Use Case** | Fast Q&A | Detailed analysis |
+
+### Switching Models
+
+To switch to a larger model for better quality:
+
+1. **Install larger model**: `ollama pull llama3.2:3b`
+2. **Update config**: Change `model_name` in `legal_ai_assistant/config.py`
+3. **Restart app**: The new model will be used automatically
+
+### Performance Tips
+
+- **For fastest responses**: Keep current 1B model
+- **For best quality**: Switch to 3B model (expect 4-6x slower responses)
+- **CPU optimization**: Already configured for optimal CPU performance
 
 ## 🐳 Docker Support
 

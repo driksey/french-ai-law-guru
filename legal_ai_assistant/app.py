@@ -28,7 +28,7 @@ with st.sidebar:
 
     # Model configuration
     st.markdown("### Model Configuration")
-    st.info("🚀 Using Llama 3.1 8B via Ollama (~6-8GB RAM)")
+    st.info("🚀 Using Llama 3.2 1B via Ollama (~2-3GB RAM)")
 
     # Show model information
     model_info = get_model_info()
@@ -72,10 +72,10 @@ with st.spinner("Loading documents and embeddings..."):
 chat_model = get_chat_model()
 
 if chat_model is None:
-    st.error("Failed to load Llama 3.1 8B model via Ollama. Please ensure:")
+    st.error("Failed to load Llama 3.2 1B model via Ollama. Please ensure:")
     st.markdown("1. **Ollama is installed and running**")
-    st.markdown("2. **Model is installed**: Run `ollama pull llama3.1:8b`")
-    st.markdown("3. **Check system resources** (6-8GB RAM required)")
+    st.markdown("2. **Model is installed**: Run `ollama pull llama3.2:1b`")
+    st.markdown("3. **Check system resources** (2-3GB RAM required)")
     st.stop()
 
 agent = get_rag_agent(chat_model, retriever, top_k)
@@ -83,7 +83,7 @@ agent = get_rag_agent(chat_model, retriever, top_k)
 question = st.text_input("Ask the chatbot a question about the AI regulations in France")
 
 if st.button("Ask") and question:
-    with st.spinner("Generating answer..."):
+    with st.spinner("Searching documents..."):
         answer = process_question_with_agent(agent, question)
         retrieved_docs = retrieve_documents(question, retriever)
 

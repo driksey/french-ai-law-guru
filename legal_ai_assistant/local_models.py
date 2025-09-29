@@ -20,21 +20,22 @@ def create_local_llm():
             temperature=LLM_CONFIG["temperature"],
             num_predict=LLM_CONFIG["max_new_tokens"],
             verbose=True,
-            # CPU-specific optimizations for Llama 3.2 3B
-            num_ctx=4096,  # Larger context for Llama 3.2 3B
-            num_thread=6,  # Use more CPU threads for better performance
+            # CPU-specific optimizations for speed
+            num_ctx=2048,  # Reduced context for speed
+            num_thread=8,  # More threads for better performance
             num_gpu=0,     # Disable GPU completely
-            repeat_penalty=1.1,
-            top_k=40,
-            top_p=0.9,
-            # CPU memory optimizations for Llama 3.2 3B
-            num_batch=512,  # Larger batch size for Llama 3.2 3B
-            use_mmap=True,  # Memory mapping for faster loading
+            repeat_penalty=1.05,  # Reduced for speed
+            top_k=20,      # Reduced for speed
+            top_p=0.8,     # Reduced for speed
+            # CPU memory optimizations for speed
+            num_batch=1024,  # Larger batch for speed
+            use_mmap=True,   # Memory mapping for faster loading
             use_mlock=False, # Disable mlock on CPU to avoid memory issues
-            low_vram=True,  # Optimize for lower memory usage
-            # Additional CPU optimizations
-            num_keep=5,     # Keep fewer tokens in context
-            tfs_z=1.0,      # Tail free sampling for faster generation
+            low_vram=True,   # Optimize for lower memory usage
+            # Additional CPU optimizations for speed
+            num_keep=3,      # Keep fewer tokens for speed
+            tfs_z=0.95,      # Tail free sampling for faster generation
+            typical_p=0.9,   # Speed optimization
         )
 
         print("✅ Ollama ChatOllama initialized successfully")

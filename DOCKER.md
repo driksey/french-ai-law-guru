@@ -18,7 +18,7 @@ docker-compose up -d --build
 
 ### Access the Application
 - **URL**: http://localhost:8501
-- **Model**: Llama 3.1:8b (4.9GB)
+- **Model**: Llama 3.2:1b (1.3GB)
 - **Memory**: 8-10GB RAM required
 
 ## 📋 Available Commands
@@ -49,7 +49,7 @@ docker-compose down -v --rmi all
 ### Environment Variables
 ```yaml
 environment:
-  - OLLAMA_MODEL=llama3.1:8b
+  - OLLAMA_MODEL=llama3.2:1b
   - LANGCHAIN_TRACING_V2=false
 ```
 
@@ -64,14 +64,14 @@ deploy:
 ```
 
 ### Persistent Volumes
-- `ollama_data`: Ollama models (~4.9GB)
+- `ollama_data`: Ollama models (~1.3GB)
 - `chroma_data`: Vector database (~100MB)
 - `cache_data`: Application cache (~50MB)
 
 ## 🏗️ Architecture
 
 ### Container Components
-1. **Ollama Service**: Runs Llama 3.1:8b model
+1. **Ollama Service**: Runs Llama 3.2:1b model
 2. **Streamlit App**: Web interface on port 8501
 3. **ChromaDB**: Vector database for document storage
 4. **Python Dependencies**: All required packages
@@ -80,7 +80,7 @@ deploy:
 1. Install Ollama in container
 2. Start Ollama service
 3. Wait for Ollama to be ready
-4. Pull Llama 3.1:8b model (if not cached)
+4. Pull Llama 3.2:1b model (if not cached)
 5. Start Streamlit application
 
 ## 🔍 Monitoring
@@ -140,7 +140,7 @@ docker system prune -a
 docker-compose exec faq-chatbot ping google.com
 
 # Manual model pull
-docker-compose exec faq-chatbot ollama pull llama3.1:8b
+docker-compose exec faq-chatbot ollama pull llama3.2:1b
 ```
 
 #### Memory Issues
@@ -186,8 +186,8 @@ ports:
 
 ### Update Model
 ```bash
-# Pull latest Llama 3.1:8b
-docker-compose exec faq-chatbot ollama pull llama3.1:8b
+# Pull latest Llama 3.2:1b
+docker-compose exec faq-chatbot ollama pull llama3.2:1b
 ```
 
 ### Update Application
