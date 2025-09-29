@@ -1,0 +1,78 @@
+# Git
+.git
+.gitignore
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+
+# Cache directories
+cache/
+*.pkl
+
+# Documentation (not needed in container)
+*.md
+!README.md
+
+# Tests (not needed in container)
+tests/
+
+# Docker files (avoid recursion)
+Dockerfile*
+docker-compose*.yml
+docker-volumes.sh
+.dockerignore
+
+# ChromaDB (will be mounted as volume)
+chroma_db/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp

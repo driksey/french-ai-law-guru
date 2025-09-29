@@ -1,0 +1,41 @@
+version: '3.8'
+
+name: legal-ai-assistant
+
+services:
+  chatbot:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      - OLLAMA_MODEL=llama3.1:8b
+      - LANGCHAIN_TRACING_V2=false
+    volumes:
+      # Persist Ollama models between container restarts
+      - ollama_data:/root/.ollama
+      # Mount entire project directory
+      - .:/work
+      # Persist ChromaDB vector store
+      - chroma_data:/work/chroma_db
+      # Persist cache directory
+      - cache_data:/work/cache
+    deploy:
+      resources:
+        limits:
+          memory: 10G
+        reservations:
+          memory: 8G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  ollama_data:
+    driver: local
+  chroma_data:
+    driver: local
+  cache_data:
+    driver: local
