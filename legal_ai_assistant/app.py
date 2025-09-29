@@ -21,10 +21,10 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 load_dotenv()
 
 st.set_page_config(page_title=APP_CONFIG["title"], layout=APP_CONFIG["page_layout"])
-st.title("French AI Law Guru")
+st.title("French AI Law Assistant")
 
 with st.sidebar:
-    st.markdown("## 🏠 Local Model Settings")
+    st.markdown("## 🏠 AI Law Assistant Settings")
 
     # Model configuration
     st.markdown("### Model Configuration")
@@ -84,7 +84,7 @@ if chat_model is None:
 
 agent = get_rag_agent(chat_model, retriever, top_k)
 
-question = st.text_input("Ask the chatbot a question about the AI regulations in France")
+question = st.text_input("Ask the assistant a question about the AI regulations in France")
 
 if st.button("Ask") and question:
     with st.spinner("Searching documents..."):

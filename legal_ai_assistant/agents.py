@@ -54,7 +54,7 @@ class BasicToolNode:
 def create_prompt():
     """Create the system prompt optimized for speed."""
     return ChatPromptTemplate.from_messages([
-        ("system", """AI assistant for French AI regulations. Use tool_rag for all questions.
+        ("system", """AI Q&A assistant for French AI regulations. Use tool_rag for all questions.
 
 TOOL: tool_rag(query) - Search AI regulation documents
 
