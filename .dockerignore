@@ -63,6 +63,10 @@ cache/
 # Tests (not needed in container)
 tests/
 
+# Development dependencies
+requirements-dev.txt
+pyproject.toml
+
 # Docker files (avoid recursion)
 Dockerfile*
 docker-compose*.yml
