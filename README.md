@@ -1,8 +1,8 @@
-# French AI Law Guru 🤖
+# French AI Law Assistant 🤖
 
 ![CI - main branch](https://github.com/driksey/french-ai-law-guru/actions/workflows/ci.yml/badge.svg?branch=main&label=main) ![CI - develop branch](https://github.com/driksey/french-ai-law-guru/actions/workflows/ci.yml/badge.svg?branch=develop&label=develop)
 
-A sophisticated RAG (Retrieval-Augmented Generation) chatbot built with **Streamlit**, **LangChain**, and **LangGraph** for answering questions about AI regulations in France.  
+A sophisticated RAG (Retrieval-Augmented Generation) Q&A Assistant built with **Streamlit**, **LangChain**, and **LangGraph** for answering questions about AI regulations in France.  
 It processes PDF documents, creates embeddings, and uses **Llama 3.2 1B** via Ollama to generate contextual answers with ultra-fast CPU-optimized inference and tool calling support.
 
 ---
@@ -15,6 +15,7 @@ It processes PDF documents, creates embeddings, and uses **Llama 3.2 1B** via Ol
 - **Ollama Integration**: Uses Ollama with Llama 3.2 1B for ultra-fast CPU inference and tool calling
 - **Local LLM**: Runs entirely locally with Llama 3.2 1B (~1.3GB) - no external API dependencies
 - **Agent-Based Processing**: Uses LangGraph agents for intelligent question answering
+- **Stateless Q&A System**: Each question is processed independently for optimal performance
 - **User-friendly Interface**: Clean Streamlit interface with cache management and settings
 - **CI/CD Pipeline**: Includes linting, testing, and automated workflows  
 
@@ -34,6 +35,19 @@ It processes PDF documents, creates embeddings, and uses **Llama 3.2 1B** via Ol
 > - **Memory**: 40% less RAM usage than standard 1B model
 > - **Quality**: Good for Q&A, slightly less detailed than larger models
 > - **Use Case**: Perfect for quick legal document queries and fast responses
+
+---
+
+## 📋 How It Works
+
+This is a **stateless Q&A system**, meaning each question is processed independently without memory of previous interactions. This design choice provides:
+
+- **Optimal Performance**: No context accumulation means faster response times
+- **Consistent Results**: Each answer is based solely on the documents, not conversation history
+- **Resource Efficiency**: Lower memory usage and computational overhead
+- **Reliability**: No risk of context confusion or drift over time
+
+**Note**: This is not a conversational chatbot but rather an intelligent document-based Q&A assistant.
 
 ---
 

@@ -72,7 +72,7 @@ deploy:
 
 ### Container Components
 1. **Ollama Service**: Runs Llama 3.2:1b-instruct-q4_K_M model
-2. **Streamlit App**: Web interface on port 8501
+2. **Streamlit Q&A Assistant**: Web interface on port 8501
 3. **ChromaDB**: Vector database for document storage
 4. **Python Dependencies**: All required packages
 
@@ -81,7 +81,7 @@ deploy:
 2. Start Ollama service
 3. Wait for Ollama to be ready
 4. Pull Llama 3.2:1b-instruct-q4_K_M model (if not cached)
-5. Start Streamlit application
+5. Start Streamlit Q&A Assistant application
 
 ## 🔍 Monitoring
 

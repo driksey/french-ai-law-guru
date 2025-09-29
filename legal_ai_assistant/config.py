@@ -65,7 +65,7 @@ VECTORSTORE_CONFIG = {
 
 # Configuration de l'application
 APP_CONFIG = {
-    "title": "French AI Law Guru",
+    "title": "French AI Law Assistant",
     "page_layout": "wide",
     "initial_sidebar_state": "expanded",
     "max_top_k": 3,

@@ -60,7 +60,7 @@ else
   ollama pull llama3.2:1b-instruct-q4_K_M
 fi
 
-echo "Starting Streamlit application..."
+echo "Starting Streamlit Q&A Assistant application..."
 streamlit run run_streamlit.py --server.port=8501 --server.address=0.0.0.0
 EOF
 
