@@ -30,10 +30,10 @@ It processes PDF documents, creates embeddings, and uses **Llama 3.2 1B** via Ol
 - **Performance**: Excellent for legal document analysis and Q&A on CPU with optimized memory usage
 - **Local Processing**: No external API calls required
 
-> **⚡ Performance vs Quality Trade-off**: This quantized model prioritizes **speed and efficiency over detailed responses**. 
-> - **Speed**: 5-6x faster than 3B models (5-10 seconds vs 60+ seconds)
-> - **Memory**: 40% less RAM usage than standard 1B model
-> - **Quality**: Good for Q&A, slightly less detailed than larger models
+> **⚡ Performance Optimized**: This quantized model prioritizes **speed and efficiency for optimal Q&A performance**. 
+> - **Speed**: Ultra-fast inference with optimized response times
+> - **Memory**: Efficient RAM usage with quantized model
+> - **Quality**: Excellent for legal document analysis and Q&A
 > - **Use Case**: Perfect for quick legal document queries and fast responses
 
 ---
@@ -267,35 +267,28 @@ This chatbot includes built-in LangSmith integration for monitoring, tracing, an
 ### Advanced Configuration
 For detailed setup instructions, see the configuration files in the project.
 
-> **💡 Tip**: The app automatically uses the `llama3.2:1b` model configured in `legal_ai_assistant/config.py`. You can modify the model settings there if needed.
+> **💡 Tip**: The app automatically uses the `llama3.2:1b-instruct-q4_K_M` model configured in `legal_ai_assistant/config.py`. You can modify the model settings there if needed.
 
 ## ⚡ Performance Optimization
 
 This application is optimized for **ultra-fast inference** using the Llama 3.2 1B model:
 
-### Speed vs Quality Trade-off
+### Current Configuration
 
-| Aspect | Llama 3.2 1B (Current) | Llama 3.2 3B (Alternative) |
-|--------|------------------------|----------------------------|
-| **Inference Time** | 5-10 seconds | 60+ seconds |
-| **Model Size** | 1.1GB | 2.0GB |
-| **RAM Required** | ≈2GB | 3-5GB |
-| **Response Quality** | Good (concise) | Excellent (detailed) |
-| **Use Case** | Fast Q&A | Detailed analysis |
+| Aspect | Llama 3.2 1B Quantified |
+|--------|-------------------------|
+| **Inference Time** | 5-10 seconds |
+| **Model Size** | 1.1GB |
+| **RAM Required** | ≈2GB |
+| **Response Quality** | Excellent for Q&A |
+| **Use Case** | Fast legal document analysis |
 
-### Switching Models
+### Performance Features
 
-To switch to a larger model for better quality:
-
-1. **Install larger model**: `ollama pull llama3.2:3b`
-2. **Update config**: Change `model_name` in `legal_ai_assistant/config.py`
-3. **Restart app**: The new model will be used automatically
-
-### Performance Tips
-
-- **For fastest responses**: Keep current 1B model
-- **For best quality**: Switch to 3B model (expect 4-6x slower responses)
-- **CPU optimization**: Already configured for optimal CPU performance
+- **Ultra-fast responses**: Optimized for quick Q&A interactions
+- **Memory efficient**: Quantized model with optimal RAM usage
+- **CPU optimized**: Configured for maximum performance on CPU-only systems
+- **Stateless design**: Each question processed independently for optimal speed
 
 ## 🐳 Docker Support
 
