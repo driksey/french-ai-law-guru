@@ -1,6 +1,7 @@
 # agents.py
 
 import json
+import re
 import time
 from typing import List
 from langdetect import detect
@@ -11,7 +12,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.graph import END, START, MessagesState, StateGraph
 from pydantic import BaseModel, Field
 
-from legal_ai_assistant.utils import retrieve_documents
+from legal_ai_assistant.utils import retrieve_documents, calculate_max_response_tokens
 
 
 # ---------- SCHEMA ----------
@@ -89,7 +90,7 @@ JSON Schema Example:
   }}
 }}
 
-If the question is not legal, answer normally in the same language.
+If the question is not legal-related, answer normally in the same language.
 """
     
     return ChatPromptTemplate.from_messages([
@@ -100,20 +101,34 @@ If the question is not legal, answer normally in the same language.
 
 # ---------- MODEL CALL ----------
 def parse_tool_call(raw_content: str):
-    """Robust JSON parsing for multi-blocks."""
+    """Robust JSON parsing using regex for better reliability."""
     candidates = []
-    clean_content = raw_content.strip().replace("```json", "").replace("```", "").strip()
-    possible_blocks = [clean_content] if "}}\n{{" not in clean_content else clean_content.split("\n")
-
-    for block in possible_blocks:
+    
+    # Remove markdown code blocks if present
+    clean_content = raw_content.strip()
+    if clean_content.startswith('```json'):
+        clean_content = clean_content.replace('```json', '').replace('```', '').strip()
+    elif clean_content.startswith('```'):
+        clean_content = clean_content.replace('```', '').strip()
+    
+    # Use regex to find JSON blocks between { and }
+    json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+    json_blocks = re.findall(json_pattern, clean_content, re.DOTALL)
+    
+    # If no blocks found, try the whole content
+    if not json_blocks:
+        json_blocks = [clean_content]
+    
+    for block in json_blocks:
         try:
-            parsed = json.loads(block)
+            parsed = json.loads(block.strip())
             validated = ToolCallSchema(**parsed)
             candidates.append({
                 "id": "parsed-tool-call",
                 "name": validated.name,
                 "args": validated.arguments
             })
+            break  # Return first valid JSON found
         except Exception:
             continue
 
@@ -129,7 +144,6 @@ def call_model(state: MessagesState, chat_model, tools):
     last_user_msg = user_messages[-1].content if user_messages else "Hello"
     try:
         lang_detected = detect(last_user_msg)
-        print(f"[INFO] Detected user language: {lang_detected}")
     except Exception:
         lang_detected = None
 
@@ -141,43 +155,58 @@ def call_model(state: MessagesState, chat_model, tools):
     max_retries = 2
     raw_content = ""
     tool_calls = []
+    
+    # Check if this is the first call (no tool messages in history)
+    has_tool_messages = any(hasattr(msg, 'tool_call_id') for msg in state["messages"])
+    
     for attempt in range(max_retries):
         response = chat_model_with_prompt.invoke({"history": state["messages"]})
         raw_content = response.content if hasattr(response, "content") else str(response)
         tool_calls = parse_tool_call(raw_content)
         if tool_calls:
-            print(f"[OK] Tool call parsed successfully on attempt {attempt+1}")
+            print(f"[OK] Tool call parsed successfully")
             break
-        else:
-            print(f"[WARN] JSON parse failed, retrying attempt {attempt+1}")
-            # Add a retry instruction to force JSON only
+        elif not has_tool_messages and attempt < max_retries - 1:
+            # Add a retry instruction to force JSON only (only for first phase)
             retry_msg = HumanMessage(content="Output valid JSON only. Do not write any text outside JSON.")
             state["messages"].append(retry_msg)
+        else:
+            break
 
     if isinstance(response, AIMessage):
         response.tool_calls = tool_calls
     else:
         response = AIMessage(content=raw_content, tool_calls=tool_calls)
 
-    print(f"[PERF] call_model total: {time.time() - start_time:.2f}s")
+    # Minimal logging for speed
     return {"messages": [response]}
 
 
 # ---------- ROUTING ----------
 def route_tools(state: MessagesState):
+    """Route based on message types for robust workflow."""
     messages = state if isinstance(state, list) else state.get("messages", [])
     if not messages:
         raise ValueError("No messages in route_tools")
 
     ai_message = messages[-1]
+    
+    # If AI message has tool calls, go to tools
     if getattr(ai_message, "tool_calls", []):
         return "tools"
+    
+    # If we have tool messages in history, go to final answer
+    tool_messages = [msg for msg in messages if hasattr(msg, 'tool_call_id')]
+    if tool_messages:
+        return "final_answer"
 
     # If no tool calls, end the conversation
     return END
 
 
 # ---------- FINAL ANSWER ----------
+
+
 def create_final_answer(state: MessagesState, chat_model):
     """Generate the final answer after tool execution - optimized for the new workflow."""
     if isinstance(state, list):
@@ -196,10 +225,10 @@ def create_final_answer(state: MessagesState, chat_model):
     # Get the latest tool result
     latest_tool_message = tool_messages[-1]
     
-    # Find the original user question using message type
+    # Find the original user question using isinstance for reliability
     user_question = None
     for message in messages:
-        if hasattr(message, 'type') and message.type == "human":
+        if isinstance(message, HumanMessage):
             user_question = message.content
             break
     
@@ -209,11 +238,15 @@ def create_final_answer(state: MessagesState, chat_model):
     # Detect language for the final answer
     try:
         lang_detected = detect(user_question)
-        print(f"[INFO] Detected user language for final answer: {lang_detected}")
     except Exception:
         lang_detected = None
 
-    # Create a streamlined prompt for faster generation
+    # Calculate dynamic response length limit
+    doc_content_length = len(latest_tool_message.content)
+    num_docs = len(tool_messages)
+    max_response_tokens = calculate_max_response_tokens(doc_content_length, num_docs)
+    
+    # Create a streamlined prompt for faster generation with dynamic length limit
     final_prompt = f"""You are a legal assistant.
 Question (language={lang_detected}): {user_question}
 
@@ -225,16 +258,12 @@ Answer with:
 - Concise but complete explanation
 - Cite exact legal references (e.g., "Article 5, EU AI Act 2024")
 - No placeholders, only real citations
+- Keep response under {max_response_tokens} tokens to avoid truncation
 """
 
     try:
         # Generate final answer using the chat model with optimized settings
-        import time
-        final_start = time.time()
         response = chat_model.invoke(final_prompt)
-        final_time = time.time() - final_start
-        print(f"[PERF] Final answer generation time: {final_time:.2f}s")
-        
         final_answer = response.content if hasattr(response, 'content') else str(response)
         
         return {"messages": [AIMessage(content=final_answer)]}

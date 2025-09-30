@@ -10,31 +10,31 @@ LLM_CONFIG = {
     "ram_required": "≈3GB",
     "description": "Gemma 2 2B - Google's latest efficient model for fast inference",
 
-    # Text generation parameters - Optimized for speed
-    "max_new_tokens": 300,   # Reduced for faster generation
+    # Text generation parameters - Optimized for speed and token efficiency
+    "max_new_tokens": 300,   # Further reduced for faster generation and less truncation risk
     "temperature": 0.1,      # Low temperature for deterministic output
-    "top_p": 0.8,            # Reduced for faster sampling
-    "repeat_penalty": 1.05,  # Reduced penalty for speed
+    "top_p": 0.7,            # Further reduced for faster sampling
+    "repeat_penalty": 1.02,  # Minimal penalty for speed
 
-    # Context configuration - Reduced for speed
-    "context_window": 2048,  # Reduced context size for faster processing
+    # Context configuration - Optimized for token efficiency
+    "context_window": 1536,  # Further reduced for faster processing and token savings
     "use_cache": True,       # Enables caching of intermediate calculations
     
     # CPU optimizations - Optimized for speed
     "num_threads": 8,        # Increased threads for better CPU utilization
     "batch_size": 64,        # Reduced batch size for faster processing
     
-    # Ollama-specific parameters - Speed optimized
-    "num_ctx": 2048,         # Reduced context size for Ollama
+    # Ollama-specific parameters - Speed and token optimized
+    "num_ctx": 1536,         # Further reduced context size for Ollama
     "num_gpu": 0,            # Number of GPUs used (0 = CPU only)
-    "top_k": 10,             # Reduced for faster sampling
-    "num_batch": 64,         # Reduced batch size for faster processing
+    "top_k": 8,              # Further reduced for faster sampling
+    "num_batch": 32,         # Smaller batch size for faster processing
     "use_mmap": True,        # Uses memory mapping to load the model
     "use_mlock": False,      # Locks the model in memory (disabled for CPU)
     "low_vram": True,        # Memory saving mode
-    "num_keep": 512,         # Reduced tokens to keep for speed
-    "tfs_z": 0.8,            # Reduced Tail Free Sampling for speed
-    "typical_p": 0.7,        # Reduced Typical Sampling for speed
+    "num_keep": 256,         # Minimal tokens to keep for speed
+    "tfs_z": 0.7,            # Further reduced Tail Free Sampling for speed
+    "typical_p": 0.6,        # Further reduced Typical Sampling for speed
 
     # Quantization configuration
     "quantization": {
@@ -63,7 +63,7 @@ EMBEDDING_CONFIG = {
 VECTORSTORE_CONFIG = {
     "collection_name": "legal_docs",   # Collection name in ChromaDB
     "persist_directory": "./chroma_db", # Persistent storage directory
-    "max_context_length": 600,         # Reduced document length for faster processing
+    "max_context_length": 400,         # Further reduced for token efficiency and speed
 }
 
 # User interface configuration
@@ -71,6 +71,6 @@ APP_CONFIG = {
     "title": "French AI Law Assistant",    # Application title
     "page_layout": "wide",                 # Streamlit page layout
     "initial_sidebar_state": "expanded",   # Initial sidebar state
-    "max_top_k": 3,                        # Maximum number of documents to retrieve
-    "default_top_k": 1,                    # Default number of documents to retrieve (optimized for speed)
+    "max_top_k": 4,                        # Maximum number of documents to retrieve
+    "default_top_k": 3,                    # Default number of documents to retrieve (optimized for quality)
 }

@@ -99,7 +99,7 @@ with st.sidebar:
     st.markdown("### 📄 Document Retrieval")
     top_k = st.slider(
         "Number of doc snippets to include",
-        1,
+        2,
         APP_CONFIG["max_top_k"],
         APP_CONFIG["default_top_k"]
     )

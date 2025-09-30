@@ -6,7 +6,7 @@ from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from .config import EMBEDDING_CONFIG, VECTORSTORE_CONFIG
+from .config import EMBEDDING_CONFIG, VECTORSTORE_CONFIG, LLM_CONFIG
 
 EMB_MODEL = EMBEDDING_CONFIG["model_name"]
 
@@ -22,7 +22,7 @@ def load_pdfs(path=str):
 
 
 def preprocess_pdfs(pdfs):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=100)
     docs = text_splitter.split_documents(pdfs)
     for doc in docs:
         # Extract the parent directory name from the file path
@@ -68,7 +68,15 @@ def store_docs_with_embeddings(docs):
 
 
 def retrieve_documents(query: str, retriever):
+    """Retrieve documents with token optimization."""
     docs_retrieved = retriever.invoke(query)
+    
+    # Limit document content length to prevent token overflow
+    max_doc_length = 300  # Reduced for token efficiency
+    for doc in docs_retrieved:
+        if len(doc.page_content) > max_doc_length:
+            doc.page_content = doc.page_content[:max_doc_length] + "..."
+    
     return docs_retrieved
 
 
@@ -121,3 +129,45 @@ def load_or_create_vectorstore(docs, cache_key=None):
     vectorstore = store_docs_with_embeddings(docs)
 
     return vectorstore
+
+
+# ---------- TOKEN CALCULATION UTILITIES ----------
+def estimate_tokens_from_chars(text: str) -> int:
+    """Estimate token count from character count (rough approximation: 1 token ≈ 4 chars)."""
+    return len(text) // 4
+
+
+def calculate_max_response_tokens(context_length: int, num_docs: int, workflow_overhead: int = 100) -> int:
+    """Calculate maximum response tokens based on available context."""
+    
+    # Base context window
+    total_context = LLM_CONFIG["context_window"]
+    
+    # Estimate tokens for different components
+    system_prompt_tokens = 50  # Estimated system prompt tokens
+    user_question_tokens = 30  # Estimated user question tokens
+    doc_content_tokens = context_length // 4  # Document content (chars to tokens)
+    prompt_formatting_tokens = 80  # Prompt structure and formatting
+    
+    # Total reserved tokens
+    reserved_tokens = (system_prompt_tokens + user_question_tokens + 
+                      doc_content_tokens + prompt_formatting_tokens + workflow_overhead)
+    
+    # Calculate available space for response
+    available_tokens = total_context - reserved_tokens
+    
+    # Apply safety margin (25% buffer for safety)
+    max_response_tokens = int(available_tokens * 0.75)
+    
+    # Ensure minimum response length
+    min_response_tokens = 60
+    max_response_tokens = max(max_response_tokens, min_response_tokens)
+    
+    # Cap at model's max_new_tokens setting
+    model_max_tokens = LLM_CONFIG["max_new_tokens"]
+    max_response_tokens = min(max_response_tokens, model_max_tokens)
+    
+    # Debug info (can be removed in production)
+    print(f"[TOKEN_CALC] Context: {total_context}, Reserved: {reserved_tokens}, Available: {available_tokens}, Max response: {max_response_tokens}")
+    
+    return max_response_tokens
