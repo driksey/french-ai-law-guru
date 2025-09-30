@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import cast
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
@@ -141,7 +142,7 @@ def calculate_max_response_tokens(context_length: int, num_docs: int, workflow_o
     """Calculate maximum response tokens based on available context."""
     
     # Base context window
-    total_context: int = int(LLM_CONFIG["context_window"])
+    total_context: int = cast(int, LLM_CONFIG["context_window"])
     
     # Estimate tokens for different components
     system_prompt_tokens = 50  # Estimated system prompt tokens
@@ -164,7 +165,7 @@ def calculate_max_response_tokens(context_length: int, num_docs: int, workflow_o
     max_response_tokens = max(max_response_tokens, min_response_tokens)
     
     # Cap at model's max_new_tokens setting
-    model_max_tokens: int = int(LLM_CONFIG["max_new_tokens"])
+    model_max_tokens: int = cast(int, LLM_CONFIG["max_new_tokens"])
     max_response_tokens = min(max_response_tokens, model_max_tokens)
     
     # Debug info (can be removed in production)

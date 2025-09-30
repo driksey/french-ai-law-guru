@@ -1,6 +1,7 @@
 # app.py
 import sys
 from pathlib import Path
+from typing import cast
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -23,8 +24,8 @@ load_dotenv()
 
 st.set_page_config(
     page_title=str(APP_CONFIG["title"]), 
-    layout=str(APP_CONFIG["page_layout"]),
-    initial_sidebar_state=str(APP_CONFIG["initial_sidebar_state"])
+    layout=cast(str, APP_CONFIG["page_layout"]),
+    initial_sidebar_state=cast(str, APP_CONFIG["initial_sidebar_state"])
 )
 
 # Custom CSS to expand sidebar and improve spacing
@@ -100,8 +101,8 @@ with st.sidebar:
     top_k = st.slider(
         "Number of doc snippets to include",
         2,
-        int(APP_CONFIG["max_top_k"]),
-        int(APP_CONFIG["default_top_k"])
+        cast(int, APP_CONFIG["max_top_k"]),
+        cast(int, APP_CONFIG["default_top_k"])
     )
 
 
