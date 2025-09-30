@@ -11,6 +11,9 @@ langchain-ollama
 langchain-huggingface
 langgraph
 
+# Data validation
+pydantic
+
 # Vector database and embeddings
 chromadb
 sentence-transformers
@@ -19,6 +22,9 @@ numpy
 
 # Document processing
 pypdf
+
+# Language detection
+langdetect
 
 # Ollama integration
 ollama
