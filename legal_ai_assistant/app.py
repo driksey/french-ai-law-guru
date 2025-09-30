@@ -22,9 +22,9 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 load_dotenv()
 
 st.set_page_config(
-    page_title=APP_CONFIG["title"], 
-    layout=APP_CONFIG["page_layout"],
-    initial_sidebar_state=APP_CONFIG["initial_sidebar_state"]
+    page_title=str(APP_CONFIG["title"]), 
+    layout=str(APP_CONFIG["page_layout"]),
+    initial_sidebar_state=str(APP_CONFIG["initial_sidebar_state"])
 )
 
 # Custom CSS to expand sidebar and improve spacing
@@ -100,8 +100,8 @@ with st.sidebar:
     top_k = st.slider(
         "Number of doc snippets to include",
         2,
-        APP_CONFIG["max_top_k"],
-        APP_CONFIG["default_top_k"]
+        int(APP_CONFIG["max_top_k"]),
+        int(APP_CONFIG["default_top_k"])
     )
 
 

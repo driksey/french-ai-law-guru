@@ -73,7 +73,7 @@ def create_rag_tool(retriever):
 
 
 # ---------- PROMPT STRICT JSON ----------
-def create_prompt_strict(language_hint: str = None):
+def create_prompt_strict(language_hint: str | None = None):
     language_text = language_hint if language_hint else "detect automatically"
     
     system_template = """
