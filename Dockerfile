@@ -53,11 +53,11 @@ for i in {1..30}; do
   sleep 2
 done
 
-if ollama list | grep -q "llama3.2:1b-instruct-q4_K_M"; then
-  echo "Llama 3.2:1b-instruct-q4_K_M model already installed"
+if ollama list | grep -q "gemma2:2b"; then
+  echo "Gemma 2:2b model already installed"
 else
-  echo "Pulling Llama 3.2:1b-instruct-q4_K_M model..."
-  ollama pull llama3.2:1b-instruct-q4_K_M
+  echo "Pulling Gemma 2:2b model..."
+  ollama pull gemma2:2b
 fi
 
 echo "Starting Streamlit Q&A Assistant application..."

@@ -36,7 +36,7 @@ def create_local_llm():
             typical_p=LLM_CONFIG["typical_p"],
         )
 
-        print("✅ Ollama ChatOllama initialized successfully")
+        print("OK Ollama ChatOllama initialized successfully")
         print(f"   Model: {model_name}")
         print(f"   Temperature: {LLM_CONFIG['temperature']}")
         print(f"   Max tokens: {LLM_CONFIG['max_new_tokens']}")
@@ -45,7 +45,7 @@ def create_local_llm():
         return chat_model
 
     except Exception as e:
-        print(f"❌ Error creating Ollama client: {e}")
+        print(f"ERROR Error creating Ollama client: {e}")
         print(f"Error type: {type(e).__name__}")
         print(f"Make sure Ollama is running and the model '{model_name}' is installed.")
         print(f"To install the model, run: ollama pull {model_name}")
@@ -60,4 +60,15 @@ def get_model_info():
         "size": LLM_CONFIG["size"],
         "ram_required": LLM_CONFIG["ram_required"],
         "description": LLM_CONFIG["description"]
+    }
+
+
+def get_embedding_info():
+    """Get information about the configured embedding model."""
+    from .config import EMBEDDING_CONFIG
+    return {
+        "size": "~135MB",
+        "languages_count": len(EMBEDDING_CONFIG["supported_languages"]),
+        "supported_languages": EMBEDDING_CONFIG["supported_languages"],
+        "description": EMBEDDING_CONFIG["description"]
     }
