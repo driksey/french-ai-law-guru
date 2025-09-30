@@ -1,7 +1,7 @@
 # app.py
 import sys
 from pathlib import Path
-from typing import cast
+from typing import cast, Literal
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -24,8 +24,8 @@ load_dotenv()
 
 st.set_page_config(
     page_title=str(APP_CONFIG["title"]), 
-    layout=cast(str, APP_CONFIG["page_layout"]),
-    initial_sidebar_state=cast(str, APP_CONFIG["initial_sidebar_state"])
+    layout=cast(Literal["centered", "wide"], APP_CONFIG["page_layout"]),
+    initial_sidebar_state=cast(Literal["auto", "expanded", "collapsed"], APP_CONFIG["initial_sidebar_state"])
 )
 
 # Custom CSS to expand sidebar and improve spacing
