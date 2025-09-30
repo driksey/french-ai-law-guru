@@ -82,11 +82,17 @@ RULES:
 - DO NOT write any explanations or text outside the JSON.
 - Respond in the SAME LANGUAGE as the user's question (""" + language_text + """).
 
+IMPORTANT: Before creating the JSON, reformulate the user's question to be more complete and specific:
+- Expand abbreviations and clarify context
+- Add relevant legal framework context (EU AI Act, French AI law, GDPR, etc.)
+- Make the question more precise for legal document retrieval
+- Include key legal terms and concepts
+
 JSON Schema Example:
 {{
   "name": "tool_rag",
   "arguments": {{
-    "query": "<the legal question>"
+    "query": "<reformulated complete legal question with context>"
   }}
 }}
 
