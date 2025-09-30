@@ -75,28 +75,25 @@ def create_prompt_strict(language_hint: str = None):
     language_text = language_hint if language_hint else "detect automatically"
     
     system_template = """
-You are a French AI Law Assistant specialized in EU AI Act and French AI regulations.
+You are an assistant specialized in analyzing user questions.
+Follow these rules strictly:
 
-RULES:
-- ALWAYS respond ONLY with a JSON tool call if the question is legal.
-- DO NOT write any explanations or text outside the JSON.
-- Respond in the SAME LANGUAGE as the user's question (""" + language_text + """).
+1. Language: Always respond in the same language as the user’s question(""" + language_text + """).
 
-IMPORTANT: Before creating the JSON, reformulate the user's question to be more complete and specific:
-- Expand abbreviations and clarify context
-- Add relevant legal framework context (EU AI Act, French AI law, GDPR, etc.)
-- Make the question more precise for legal document retrieval
-- Include key legal terms and concepts
-
-JSON Schema Example:
+2. **Legal Question Detection**:  
+   - If the question is legal in nature (laws, rights, contracts, regulations, case law, legal obligations, etc.):  
+     - Reformulate the question to make it clearer, more detailed, and precise for document retrieval.  
+     - Respond **only** with a JSON tool call in the following format, with no additional text:  
 {{
   "name": "tool_rag",
   "arguments": {{
     "query": "<reformulated complete legal question with context>"
   }}
 }}
+   - Do not add any explanations, comments, or extra text outside this JSON.  
 
-If the question is not legal-related, answer normally in the same language.
+3. **Non-Legal Questions**:  
+   - If the question is not legal in nature, respond normally and directly, without any tool call or JSON.  
 """
     
     return ChatPromptTemplate.from_messages([
@@ -157,27 +154,13 @@ def call_model(state: MessagesState, chat_model, tools):
     prompt = create_prompt_strict(language_hint=lang_detected)
     chat_model_with_prompt = prompt | chat_model
 
-    # 🔹 Retry mechanism if JSON invalid
-    max_retries = 2
-    raw_content = ""
-    tool_calls = []
+    # Single call without retry mechanism
+    response = chat_model_with_prompt.invoke({"history": state["messages"]})
+    raw_content = response.content if hasattr(response, "content") else str(response)
+    tool_calls = parse_tool_call(raw_content)
     
-    # Check if this is the first call (no tool messages in history)
-    has_tool_messages = any(hasattr(msg, 'tool_call_id') for msg in state["messages"])
-    
-    for attempt in range(max_retries):
-        response = chat_model_with_prompt.invoke({"history": state["messages"]})
-        raw_content = response.content if hasattr(response, "content") else str(response)
-        tool_calls = parse_tool_call(raw_content)
-        if tool_calls:
-            print(f"[OK] Tool call parsed successfully")
-            break
-        elif not has_tool_messages and attempt < max_retries - 1:
-            # Add a retry instruction to force JSON only (only for first phase)
-            retry_msg = HumanMessage(content="Output valid JSON only. Do not write any text outside JSON.")
-            state["messages"].append(retry_msg)
-        else:
-            break
+    if tool_calls:
+        print(f"[OK] Tool call parsed successfully")
 
     if isinstance(response, AIMessage):
         response.tool_calls = tool_calls

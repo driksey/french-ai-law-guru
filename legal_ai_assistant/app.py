@@ -146,11 +146,15 @@ question = st.text_input("Ask the assistant a question about the AI regulations 
 
 if st.button("Ask") and question:
     with st.spinner("Searching documents..."):
-        answer = process_question_with_agent(agent, question)
-        retrieved_docs = retrieve_documents(question, retriever)
+        answer, was_rag_used = process_question_with_agent(agent, question)
+        if was_rag_used:
+            retrieved_docs = retrieve_documents(question, retriever)
 
     st.markdown("**Answer**")
     st.write(answer)
-    st.markdown("**Sources used**")
-    for i, doc in enumerate(retrieved_docs):
-        st.write(f"- Document {i + 1}: {doc.metadata.get('source', 'Unknown source')}")
+    
+    # Only show sources if tool_rag was actually used
+    if was_rag_used:
+        st.markdown("**Sources used**")
+        for i, doc in enumerate(retrieved_docs):
+            st.write(f"- Document {i + 1}: {doc.metadata.get('source', 'Unknown source')}")
