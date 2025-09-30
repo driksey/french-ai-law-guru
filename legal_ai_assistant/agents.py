@@ -2,7 +2,6 @@
 
 import json
 import re
-import time
 from typing import List
 from langdetect import detect
 
@@ -12,7 +11,10 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.graph import END, START, MessagesState, StateGraph
 from pydantic import BaseModel, Field
 
-from legal_ai_assistant.utils import retrieve_documents, calculate_max_response_tokens
+from legal_ai_assistant.utils import (
+    retrieve_documents,
+    calculate_max_response_tokens
+)
 
 
 # ---------- SCHEMA ----------
@@ -78,12 +80,15 @@ def create_prompt_strict(language_hint: str = None):
 You are an assistant specialized in analyzing user questions.
 Follow these rules strictly:
 
-1. Language: Always respond in the same language as the user’s question(""" + language_text + """).
+1. Language: Always respond in the same language as the user's question (""" + language_text + """).
 
-2. **Legal Question Detection**:  
-   - If the question is legal in nature (laws, rights, contracts, regulations, case law, legal obligations, etc.):  
-     - Reformulate the question to make it clearer, more detailed, and precise for document retrieval.  
-     - Respond **only** with a JSON tool call in the following format, with no additional text:  
+2. **Legal Question Detection**:
+   - If the question is legal in nature (laws, rights, contracts, regulations,
+     case law, legal obligations, etc.):
+     - Reformulate the question to make it clearer, more detailed, and precise
+       for document retrieval.
+     - Respond **only** with a JSON tool call in the following format,
+       with no additional text:  
 {{
   "name": "tool_rag",
   "arguments": {{
@@ -150,7 +155,6 @@ def call_model(state: MessagesState, chat_model, tools):
     except Exception:
         lang_detected = None
 
-    start_time = time.time()
     prompt = create_prompt_strict(language_hint=lang_detected)
     chat_model_with_prompt = prompt | chat_model
 
@@ -160,7 +164,7 @@ def call_model(state: MessagesState, chat_model, tools):
     tool_calls = parse_tool_call(raw_content)
     
     if tool_calls:
-        print(f"[OK] Tool call parsed successfully")
+        print("[OK] Tool call parsed successfully")
 
     if isinstance(response, AIMessage):
         response.tool_calls = tool_calls
@@ -195,15 +199,44 @@ def route_tools(state: MessagesState):
 
 # ---------- FINAL ANSWER ----------
 
+def _extract_messages_from_state(state: MessagesState):
+    """Extract messages from state, handling both list and dict formats."""
+    if isinstance(state, list):
+        return state
+    elif messages := state.get("messages", []):
+        return messages
+    else:
+        raise ValueError(f"No messages found in input state: {state}")
+
+
+def _find_user_question(messages):
+    """Find the original user question from messages."""
+    for message in messages:
+        if isinstance(message, HumanMessage):
+            return message.content
+    return "the user's question"
+
+
+def _create_final_prompt(user_question, tool_content, lang_detected, max_tokens):
+    """Create the final answer prompt."""
+    return f"""You are a legal assistant.
+Question (language={lang_detected}): {user_question}
+
+Documents:
+{tool_content}
+
+Answer with:
+- Respond in the SAME LANGUAGE as the question
+- Concise but complete explanation
+- Cite exact legal references (e.g., "Article 5, EU AI Act 2024")
+- No placeholders, only real citations
+- Keep response under {max_tokens} tokens to avoid truncation
+"""
+
 
 def create_final_answer(state: MessagesState, chat_model):
     """Generate the final answer after tool execution - optimized for the new workflow."""
-    if isinstance(state, list):
-        messages = state
-    elif messages := state.get("messages", []):
-        pass
-    else:
-        raise ValueError(f"No messages found in input state: {state}")
+    messages = _extract_messages_from_state(state)
 
     # Extract tool results
     tool_messages = [msg for msg in messages if hasattr(msg, 'tool_call_id')]
@@ -214,15 +247,8 @@ def create_final_answer(state: MessagesState, chat_model):
     # Get the latest tool result
     latest_tool_message = tool_messages[-1]
     
-    # Find the original user question using isinstance for reliability
-    user_question = None
-    for message in messages:
-        if isinstance(message, HumanMessage):
-            user_question = message.content
-            break
-    
-    if not user_question:
-        user_question = "the user's question"
+    # Find the original user question
+    user_question = _find_user_question(messages)
     
     # Detect language for the final answer
     try:
@@ -235,26 +261,13 @@ def create_final_answer(state: MessagesState, chat_model):
     num_docs = len(tool_messages)
     max_response_tokens = calculate_max_response_tokens(doc_content_length, num_docs)
     
-    # Create a streamlined prompt for faster generation with dynamic length limit
-    final_prompt = f"""You are a legal assistant.
-Question (language={lang_detected}): {user_question}
-
-Documents:
-{latest_tool_message.content}
-
-Answer with:
-- Respond in the SAME LANGUAGE as the question
-- Concise but complete explanation
-- Cite exact legal references (e.g., "Article 5, EU AI Act 2024")
-- No placeholders, only real citations
-- Keep response under {max_response_tokens} tokens to avoid truncation
-"""
+    # Create prompt and generate answer
+    final_prompt = _create_final_prompt(user_question, latest_tool_message.content, 
+                                       lang_detected, max_response_tokens)
 
     try:
-        # Generate final answer using the chat model with optimized settings
         response = chat_model.invoke(final_prompt)
         final_answer = response.content if hasattr(response, 'content') else str(response)
-        
         return {"messages": [AIMessage(content=final_answer)]}
     except Exception as e:
         print(f"[ERROR] Failed to generate final answer: {e}")

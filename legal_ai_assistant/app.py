@@ -77,7 +77,7 @@ with st.sidebar:
         st.markdown(f"- Languages: {embedding_info['languages_count']} languages")
         st.markdown(f"- Cross-lingual: FR-EN optimized")
         st.markdown(f"- Description: {embedding_info['description']}")
-        st.markdown(f"- Backend: Hugging Face (Local)")
+        st.markdown("- Backend: Hugging Face (Local)")
     
     st.markdown("---")  # Separator line
     

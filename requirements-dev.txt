@@ -4,6 +4,8 @@
 # Linting and formatting
 ruff
 black
+flake8
+mypy
 
 # Testing
 pytest
