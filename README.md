@@ -23,11 +23,11 @@ It processes PDF documents, creates embeddings, and uses **Llama 3.2 1B** via Ol
 
 ## 🤖 Model Specifications
 
-**Llama 3.2 1B Quantifié via Ollama**
-- **Model Size**: ~1.1GB (quantized, optimized by Ollama)
-- **RAM Required**: ≈2GB
-- **Features**: Ultra-fast inference, tool calling support, RAG optimization, quantized Q4_K_M for speed
-- **Performance**: Excellent for legal document analysis and Q&A on CPU with optimized memory usage
+**Gemma 2 2B via Ollama**
+- **Model Size**: ~1.6GB (optimized by Ollama)
+- **RAM Required**: ≈3GB
+- **Features**: Ultra-fast inference, excellent JSON generation, RAG optimization, Google's latest architecture
+- **Performance**: Superior quality and speed for legal document analysis and Q&A on CPU
 - **Local Processing**: No external API calls required
 
 **Embeddings Multilingues**
@@ -65,7 +65,7 @@ This is a **stateless Q&A system**, meaning each question is processed independe
 
 **Option 1: Local Development**
 1. **Install Ollama**: Download from [ollama.ai](https://ollama.ai)
-2. **Pull the model**: `ollama pull llama3.2:1b-instruct-q4_K_M`
+2. **Pull the model**: `ollama pull gemma2:2b`
 
 **Option 2: Docker Deployment (Recommended)**
 1. **Install Docker**: Download from [docker.com](https://docker.com)
@@ -101,7 +101,7 @@ Create a `.env` file in the project root:
 # Hugging Face Configuration
 HF_TOKEN=your_huggingface_token
 # Ollama configuration (no API key needed for local models)
-OLLAMA_MODEL=llama3.2:1b-instruct-q4_K_M
+OLLAMA_MODEL=gemma2:2b
 
 # LangSmith Configuration (Optional - for tracing and monitoring)
 LANGCHAIN_API_KEY=your_langsmith_api_key_here
@@ -309,30 +309,31 @@ This chatbot includes built-in LangSmith integration for monitoring, tracing, an
 ### Advanced Configuration
 For detailed setup instructions, see the configuration files in the project.
 
-> **💡 Tip**: The app automatically uses the `llama3.2:1b-instruct-q4_K_M` model configured in `legal_ai_assistant/config.py`. You can modify the model settings there if needed.
+> **💡 Tip**: The app automatically uses the `gemma2:2b` model configured in `legal_ai_assistant/config.py`. You can modify the model settings there if needed.
 
 ## ⚡ Performance Optimization
 
-This application is optimized for **ultra-fast inference** using the Llama 3.2 1B model:
+This application is optimized for **high-quality inference** using the Gemma 2 2B model:
 
 ### Current Configuration
 
-| Aspect | Llama 3.2 1B Quantified |
-|--------|-------------------------|
-| **Inference Time** | 8-15 seconds |
-| **Model Size** | 1.1GB |
-| **RAM Required** | ≈2.5GB |
-| **Context Window** | 2048 tokens |
-| **Response Quality** | Excellent for Q&A |
-| **Use Case** | Fast legal document analysis with memory |
+| Aspect | Gemma 2 2B |
+|--------|------------|
+| **Inference Time** | 15-25 seconds |
+| **Model Size** | 1.6GB |
+| **RAM Required** | ≈3GB |
+| **Context Window** | 4096 tokens |
+| **Response Quality** | Superior for Q&A with citations |
+| **Use Case** | High-quality legal document analysis |
 
 ### Performance Features
 
-- **Fast responses**: Optimized for Q&A interactions with context memory
-- **Memory efficient**: Quantized model with optimal RAM usage
+- **Comprehensive responses**: Optimized for detailed Q&A with full citations
+- **Memory efficient**: Optimized model with balanced RAM usage
 - **CPU optimized**: Configured for maximum performance on CPU-only systems
-- **Context awareness**: Remembers previous tool_rag calls within conversation
-- **Document retrieval**: Enhanced context window for better document analysis
+- **Context awareness**: Extended context window for complete conversations
+- **Document retrieval**: Enhanced context window for comprehensive document analysis
+- **No truncation**: 500-token responses ensure complete answers
 
 ## 🐳 Docker Support
 

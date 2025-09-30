@@ -18,7 +18,7 @@ docker-compose up -d --build
 
 ### Access the Application
 - **URL**: http://localhost:8501
-- **Model**: Llama 3.2:1b-instruct-q4_K_M (807MB)
+- **Model**: Gemma 2:2b (1.6GB)
 - **Memory**: 8-10GB RAM required
 
 ## 📋 Available Commands
@@ -49,7 +49,7 @@ docker-compose down -v --rmi all
 ### Environment Variables
 ```yaml
 environment:
-  - OLLAMA_MODEL=llama3.2:1b-instruct-q4_K_M
+  - OLLAMA_MODEL=gemma2:2b
   - LANGCHAIN_TRACING_V2=false
 ```
 
@@ -71,7 +71,7 @@ deploy:
 ## 🏗️ Architecture
 
 ### Container Components
-1. **Ollama Service**: Runs Llama 3.2:1b-instruct-q4_K_M model
+1. **Ollama Service**: Runs Gemma 2:2b model
 2. **Streamlit Q&A Assistant**: Web interface on port 8501
 3. **ChromaDB**: Vector database for document storage
 4. **Python Dependencies**: All required packages
@@ -80,7 +80,7 @@ deploy:
 1. Install Ollama in container
 2. Start Ollama service
 3. Wait for Ollama to be ready
-4. Pull Llama 3.2:1b-instruct-q4_K_M model (if not cached)
+4. Pull Gemma 2:2b model (if not cached)
 5. Start Streamlit Q&A Assistant application
 
 ## 🔍 Monitoring
@@ -140,7 +140,7 @@ docker system prune -a
 docker-compose exec faq-chatbot ping google.com
 
 # Manual model pull
-docker-compose exec faq-chatbot ollama pull llama3.2:1b-instruct-q4_K_M
+docker-compose exec faq-chatbot ollama pull gemma2:2b
 ```
 
 #### Memory Issues
@@ -186,8 +186,8 @@ ports:
 
 ### Update Model
 ```bash
-# Pull latest Llama 3.2:1b-instruct-q4_K_M
-docker-compose exec faq-chatbot ollama pull llama3.2:1b-instruct-q4_K_M
+# Pull latest Gemma 2:2b
+docker-compose exec faq-chatbot ollama pull gemma2:2b
 ```
 
 ### Update Application
