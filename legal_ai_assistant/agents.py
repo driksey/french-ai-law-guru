@@ -114,25 +114,15 @@ def create_analysis_prompt():
 You are an expert legal classifier and document retrieval specialist.
 
 **Your tasks:**
-1. Reformulate the question for optimal document retrieval
-2. Determine if the question is of a legal nature
-3. Identify the specific legal scope/domain if applicable
+1. Determine if the question is of a legal nature
+2. If legal, reformulate ONLY if necessary for better document retrieval
+3. If non-legal, keep the original question unchanged
+4. Identify the specific legal scope/domain if applicable
 
-**Question Reformulation Guidelines:**
-Transform any question into a version that is:
-1. Clear and grammatically correct
-2. Complete, including any implicit context needed to understand the query fully
-3. Specific, avoiding vague terms and including relevant keywords for retrieval
-4. Focused on the core topic of the question
-5. Concise but rich enough to maximize relevant document matches
-6. Include specific legal concepts (
-    e.g., "GDPR compliance", "data transfer", "legal obligations")
-7. Add relevant legal frameworks when applicable (
-    e.g., "under EU law", "according to French regulations")
-8. Break down complex questions into specific legal aspects if needed
+**IMPORTANT: Respect the original intent of the question. Do not transform greetings, casual conversations, or non-legal questions into legal questions.**
 
 **Legal Classification Criteria:**
-A question is considered LEGAL (is_legal: true) if it involves:
+A question is considered LEGAL (is_legal: true) ONLY if it explicitly involves:
 - Laws, regulations, statutes, or legal frameworks
 - Rights and obligations (individual, corporate, governmental)
 - Contracts, agreements, or legal clauses
@@ -140,30 +130,44 @@ A question is considered LEGAL (is_legal: true) if it involves:
 - Intellectual property, labor, corporate, or commercial law
 - Data protection, privacy, or cybersecurity regulations
 - AI regulations, digital services, or technology law
-- Any aspect where legal advice, references, or interpretations would be relevant
 
 A question is considered NON-LEGAL (is_legal: false) if it involves:
+- Greetings, casual conversations, or social interactions
 - Pure technical questions (e.g., "How to install software?")
 - General knowledge questions (e.g., "What is the capital of France?")
 - Personal opinions or preferences
 - Questions unrelated to legal matters
+- Simple greetings like "Comment ça va ?", "How are you?", "Bonjour"
+
+**Reformulation Guidelines (ONLY for legal questions):**
+- Keep the original meaning and intent
+- Only add legal context if it helps document retrieval
+- Do not change the core question
+- Preserve the original language
 
 **Response Format:**
 Respond ONLY with valid JSON containing:
-1. "reformulated_question": "optimized question for document retrieval with clear context and relevant keywords"
+1. "reformulated_question": "original question if non-legal, or slightly improved version if legal"
 2. "is_legal": true or false (based on criteria above)
-3. "scope": "legal domain" (e.g., "data protection law", "AI regulation", "labor law", "contract law") if legal, otherwise "general"
+3. "scope": "legal domain" if legal, otherwise "general"
 
 Example 1 (Legal):
 {{
-  "reformulated_question": "What are the specific legal obligations and compliance requirements for AI systems under EU AI Act and GDPR regulations?",
+  "reformulated_question": "What are the GDPR compliance requirements for AI systems?",
   "is_legal": true,
-  "scope": "AI regulation"
+  "scope": "data protection law"
 }}
 
-Example 2 (Non-legal):
+Example 2 (Non-legal greeting):
 {{
-  "reformulated_question": "How do I install and configure Python programming language on my computer?",
+  "reformulated_question": "Comment ça va ?",
+  "is_legal": false,
+  "scope": "general"
+}}
+
+Example 3 (Non-legal technical):
+{{
+  "reformulated_question": "How do I install Python?",
   "is_legal": false,
   "scope": "general"
 }}

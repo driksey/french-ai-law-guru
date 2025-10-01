@@ -65,6 +65,10 @@ This is a **stateless Q&A system** with intelligent question analysis and routin
 
 ### Workflow Architecture
 
+![LangGraph Workflow](workflow_diagram.png)
+
+*Complete LangGraph workflow showing the multi-model architecture and intelligent routing*
+
 1. **Question Analysis** (Gemma 2 2B)
    - Reformulates questions for optimal document retrieval
    - Determines legal relevance and scope
