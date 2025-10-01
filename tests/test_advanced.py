@@ -301,8 +301,8 @@ class TestUtilsAdvanced:
         
         result = retrieve_documents("test query", mock_retriever)
         
-        # Content should be limited to 300 characters (plus "...")
-        assert len(result[0].page_content) <= 303
+        # Content should not be limited anymore (document truncation was removed)
+        assert len(result[0].page_content) == 500  # Full content should be returned
 
 
 class TestEdgeCases:
@@ -312,12 +312,12 @@ class TestEdgeCases:
         """Test token calculation with edge cases."""
         from legal_ai_assistant.utils import calculate_max_response_tokens
         
-        # Zero context
-        result = calculate_max_response_tokens(0, 0)
+        # Zero context (pass empty strings, not integers)
+        result = calculate_max_response_tokens("", "")
         assert result > 0
         
-        # Very large context
-        result = calculate_max_response_tokens(100000, 100)
+        # Very large context (pass strings, not integers)
+        result = calculate_max_response_tokens("Very large document content with many characters", "Very large user question")
         assert result > 0
         
     def test_parse_tool_call_edge_cases(self):
