@@ -1,9 +1,20 @@
 # config.py
 """
-Centralized configuration for the FAQ chatbot
+Centralized configuration for the French AI Law Assistant.
+
+This module contains all configuration settings for:
+- LLM models (Gemma 2 2B and Gemma 3 270M)
+- Embedding models (multilingual support)
+- Vectorstore settings
+- Application settings
+- Performance optimization parameters
 """
 
-# LLM model configuration - Optimized for CPU only
+# =============================================================================
+# LLM MODEL CONFIGURATIONS
+# =============================================================================
+
+# Primary model (Gemma 2 2B) - Used for analysis and final answers
 LLM_CONFIG = {
     "model_name": "gemma2:2b",
     "size": "~1.6GB (Ollama optimized)",
@@ -50,6 +61,7 @@ LLM_CONFIG = {
 }
 
 # Question analysis and tool calling model configuration - Fast model for preprocessing
+# Tool model (Gemma 3 270M) - Used for tool calls and document retrieval
 QUESTION_ANALYSIS_CONFIG = {
     "model_name": "gemma3:270m",
     "size": "~270MB (Ollama optimized)",
@@ -83,6 +95,10 @@ QUESTION_ANALYSIS_CONFIG = {
     "typical_p": 0.6,        # Typical Sampling for speed
 }
 
+# =============================================================================
+# EMBEDDING AND VECTORSTORE CONFIGURATIONS
+# =============================================================================
+
 # Multilingual embedding model configuration
 EMBEDDING_CONFIG = {
     "model_name": "sentence-transformers/distiluse-base-multilingual-cased",
@@ -99,6 +115,10 @@ VECTORSTORE_CONFIG = {
     "persist_directory": "./chroma_db",  # Persistent storage directory
     "max_context_length": 800,         # Increased since document truncation was removed
 }
+
+# =============================================================================
+# APPLICATION CONFIGURATION
+# =============================================================================
 
 # User interface configuration
 APP_CONFIG = {

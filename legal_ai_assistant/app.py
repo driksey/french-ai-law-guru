@@ -1,4 +1,15 @@
 # app.py
+"""
+Main Streamlit application for the French AI Law Assistant.
+
+This module contains:
+- Application initialization and configuration
+- Model loading and management
+- Vectorstore initialization
+- User interface components
+- Chat functionality
+"""
+
 import sys
 from pathlib import Path
 from typing import cast, Literal
@@ -8,9 +19,8 @@ from dotenv import load_dotenv
 
 from legal_ai_assistant.agents import create_rag_agent
 from legal_ai_assistant.chat_handler import process_question_with_agent
-from legal_ai_assistant.config import APP_CONFIG
+from legal_ai_assistant.config import APP_CONFIG, LLM_CONFIG, EMBEDDING_CONFIG, QUESTION_ANALYSIS_CONFIG
 from legal_ai_assistant.local_models import create_local_llm, get_model_info, get_embedding_info
-from legal_ai_assistant.config import LLM_CONFIG, EMBEDDING_CONFIG, QUESTION_ANALYSIS_CONFIG
 from legal_ai_assistant.utils import (
     load_or_create_vectorstore,
     load_pdfs,
@@ -18,10 +28,14 @@ from legal_ai_assistant.utils import (
     retrieve_documents,
 )
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+# =============================================================================
+# APPLICATION INITIALIZATION
+# =============================================================================
 
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 load_dotenv()
 
+# Streamlit page configuration
 st.set_page_config(
     page_title=str(APP_CONFIG["title"]),
     layout=cast(Literal["centered", "wide"], APP_CONFIG["page_layout"]),
@@ -29,6 +43,10 @@ st.set_page_config(
         Literal["auto", "expanded", "collapsed"], 
         APP_CONFIG["initial_sidebar_state"])
 )
+
+# =============================================================================
+# USER INTERFACE SETUP
+# =============================================================================
 
 # Custom CSS to expand sidebar and improve spacing
 st.markdown("""
@@ -108,6 +126,11 @@ with st.sidebar:
     )
 
 
+# =============================================================================
+# MODEL AND VECTORSTORE INITIALIZATION
+# =============================================================================
+
+# Load and process documents
 path = "legal_docs"
 docs = load_pdfs(path)
 docs_processed = preprocess_pdfs(docs)
@@ -121,6 +144,7 @@ def get_vectorstore_and_retriever(_docs_processed, top_k):
     return vectorstore, retriever
 
 
+# Model loading functions
 @st.cache_resource
 def get_chat_model():
     """Cache the chat model creation."""
@@ -145,6 +169,11 @@ def get_rag_agent(_main_model, _retriever, top_k, _question_model=None, _tool_mo
     return create_rag_agent(_main_model, _retriever, _question_model, _tool_model)
 
 
+# =============================================================================
+# MAIN APPLICATION LOGIC
+# =============================================================================
+
+# Initialize models and vectorstore
 with st.spinner("Loading documents and embeddings..."):
     vectorstore, retriever = get_vectorstore_and_retriever(docs_processed, top_k)
 
@@ -168,6 +197,10 @@ if tool_model is None:
     tool_model = question_model
 
 agent = get_rag_agent(main_model, retriever, top_k, question_model, tool_model)
+
+# =============================================================================
+# CHAT INTERFACE
+# =============================================================================
 
 question = st.text_input("Ask the assistant a question about the AI regulations in France")
 

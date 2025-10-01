@@ -1,3 +1,15 @@
+# utils.py
+"""
+Utility functions for the French AI Law Assistant.
+
+This module contains:
+- PDF document processing and loading
+- Vectorstore management and caching
+- Document retrieval and chunking
+- Token calculation and optimization
+- Embedding model management
+"""
+
 import os
 from pathlib import Path
 from typing import cast
@@ -9,8 +21,16 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 from .config import EMBEDDING_CONFIG, VECTORSTORE_CONFIG, LLM_CONFIG
 
+# =============================================================================
+# GLOBAL CONFIGURATION
+# =============================================================================
+
 EMB_MODEL = EMBEDDING_CONFIG["model_name"]
 
+
+# =============================================================================
+# PDF DOCUMENT PROCESSING
+# =============================================================================
 
 def load_pdfs(path=str):
     pdfs = []
@@ -50,6 +70,10 @@ def preprocess_pdfs(pdfs):
     return docs
 
 
+# =============================================================================
+# VECTORSTORE MANAGEMENT
+# =============================================================================
+
 def store_docs_with_embeddings(docs):
     model = HuggingFaceEmbeddings(
         model_name=EMB_MODEL,
@@ -68,6 +92,10 @@ def store_docs_with_embeddings(docs):
     )
     return vectorstore
 
+
+# =============================================================================
+# DOCUMENT RETRIEVAL
+# =============================================================================
 
 def retrieve_documents(query: str, retriever):
     """Retrieve documents from vectorstore."""
@@ -126,7 +154,10 @@ def load_or_create_vectorstore(docs, cache_key=None):
     return vectorstore
 
 
-# ---------- TOKEN CALCULATION UTILITIES ----------
+# =============================================================================
+# TOKEN CALCULATION AND OPTIMIZATION
+# =============================================================================
+
 def estimate_tokens_from_chars(text: str) -> int:
     """Estimate token count from character count with improved accuracy for multilingual content."""
     # More accurate estimation considering French/legal text complexity
