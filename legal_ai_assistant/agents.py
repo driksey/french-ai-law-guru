@@ -157,17 +157,20 @@ Follow these rules strictly:
    - Always use the tool_rag to search for relevant legal documents
    - Include the legal scope/domain in your query for better document retrieval""" + scope_text + """
    - If a scope is provided above, incorporate it into your search query to find more relevant documents
+   - If multiple questions were reformulated, combine them ALL into a single comprehensive query
    - Respond **only** with a JSON tool call in the following format,
      with no additional text:
 {{
   "name": "tool_rag",
   "arguments": {{
-    "query": "YOUR ACTUAL REFORMULATED QUESTION HERE"
+    "query": "YOUR ACTUAL REFORMULATED QUESTION(S) HERE"
   }}
 }}
-   - Replace "YOUR ACTUAL REFORMULATED QUESTION HERE" with the actual reformulated legal question
-   - Do not include the placeholder text, use the real question instead
-   - Example: If user asks "AI rules?", respond with: {{"name": "tool_rag", "arguments": {{"query": "What are the legal regulations and compliance requirements for artificial intelligence systems under EU law?"}}}}
+   - Replace "YOUR ACTUAL REFORMULATED QUESTION(S) HERE" with the actual reformulated legal question(s)
+   - If there are multiple questions, include ALL of them in the query for comprehensive search
+   - Do not include the placeholder text, use the real question(s) instead
+   - Example 1 (single): If user asks "AI rules?", respond with: {{"name": "tool_rag", "arguments": {{"query": "What are the legal regulations and compliance requirements for artificial intelligence systems under EU law?"}}}}
+   - Example 2 (multiple): If there are multiple questions like "AI obligations?" and "GDPR compliance?", combine them: {{"name": "tool_rag", "arguments": {{"query": "What are the legal obligations for AI systems under EU law? What are the GDPR compliance requirements for AI systems?"}}}}
    - Do not add any explanations, comments, or extra text outside this JSON.
 """
 
