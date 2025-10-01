@@ -85,6 +85,17 @@ st.title("French AI Law Assistant")
 with st.sidebar:
     st.markdown("## 🏠 AI Law Assistant Settings")
 
+    # Document retrieval settings - MOVED TO TOP
+    st.markdown("### 📄 Document Retrieval")
+    top_k = st.slider(
+        "Number of doc snippets to include",
+        2,
+        cast(int, APP_CONFIG["max_top_k"]),
+        cast(int, APP_CONFIG["default_top_k"]),
+    )
+
+    st.markdown("---")  # Separator line
+
     # Model configuration
     st.markdown("### Model Configuration")
     st.info("🚀 Using Gemma 2 2B via Ollama (~3GB RAM)")
@@ -127,17 +138,6 @@ with st.sidebar:
         with col2:
             for lang in languages[8:]:  # Remaining languages
                 st.markdown(f"- {lang.upper()}")
-
-    st.markdown("---")  # Separator line
-
-    # Document retrieval settings
-    st.markdown("### 📄 Document Retrieval")
-    top_k = st.slider(
-        "Number of doc snippets to include",
-        2,
-        cast(int, APP_CONFIG["max_top_k"]),
-        cast(int, APP_CONFIG["default_top_k"]),
-    )
 
 
 # =============================================================================
