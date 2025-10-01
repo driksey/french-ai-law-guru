@@ -2,20 +2,24 @@
 
 ![CI - main branch](https://github.com/driksey/french-ai-law-guru/actions/workflows/ci.yml/badge.svg?branch=main&label=main) ![CI - develop branch](https://github.com/driksey/french-ai-law-guru/actions/workflows/ci.yml/badge.svg?branch=develop&label=develop)
 
-A sophisticated RAG (Retrieval-Augmented Generation) Q&A Assistant built with **Streamlit**, **LangChain**, and **LangGraph** for answering questions about AI regulations in France.  
-It processes PDF documents, creates embeddings, and uses **Llama 3.2 1B** via Ollama to generate contextual answers with ultra-fast CPU-optimized inference and tool calling support.
+A sophisticated RAG (Retrieval-Augmented Generation) Q&A Assistant built with **Streamlit**, **LangChain**, and **LangGraph** for answering questions about AI regulations in France and Europe.  
+It processes PDF documents, creates embeddings, and uses **Gemma 2 2B** and **Gemma 3 270M** via Ollama to generate contextual answers with ultra-fast CPU-optimized inference, structured output, and intelligent question analysis.
 
 ---
 
 ## 🚀 Features
 - **PDF Document Processing**: Automatically loads and processes PDF documents from the `legal_docs/` folder
 - **Advanced RAG Architecture**: Uses LangChain and LangGraph for sophisticated document retrieval and generation
+- **Intelligent Question Analysis**: Reformulates questions and determines legal relevance before processing
+- **Multi-Model Architecture**: Uses Gemma 2 2B for analysis and final answers, Gemma 3 270M for tool calls
+- **Structured Output**: Pydantic models ensure robust JSON parsing and validation
 - **Vectorstore Caching**: Intelligent caching system to speed up document loading and embedding creation
 - **LangSmith Integration**: Built-in tracing and monitoring for performance optimization and debugging
-- **Ollama Integration**: Uses Ollama with Llama 3.2 1B for ultra-fast CPU inference and tool calling
-- **Local LLM**: Runs entirely locally with Llama 3.2 1B (~1.3GB) - no external API dependencies
-- **Agent-Based Processing**: Uses LangGraph agents for intelligent question answering
-- **Stateless Q&A System**: Each question is processed independently for optimal performance
+- **Ollama Integration**: Uses Ollama with specialized models for ultra-fast CPU inference and tool calling
+- **Local LLM**: Runs entirely locally with Gemma models - no external API dependencies
+- **Agent-Based Processing**: Uses LangGraph agents with conditional routing for intelligent question answering
+- **Multilingual Support**: French-English cross-lingual queries with automatic language detection
+- **Enhanced Legal Responses**: Structured legal answers with direct responses, legal basis, conditions, and consequences
 - **User-friendly Interface**: Clean Streamlit interface with cache management and settings
 - **CI/CD Pipeline**: Includes linting, testing, and automated workflows  
 
@@ -23,11 +27,20 @@ It processes PDF documents, creates embeddings, and uses **Llama 3.2 1B** via Ol
 
 ## 🤖 Model Specifications
 
-**Gemma 2 2B via Ollama**
+**Gemma 2 2B via Ollama** (Primary Model)
 - **Model Size**: ~1.6GB (optimized by Ollama)
 - **RAM Required**: ≈3GB
 - **Features**: Ultra-fast inference, excellent JSON generation, RAG optimization, Google's latest architecture
 - **Performance**: Superior quality and speed for legal document analysis and Q&A on CPU
+- **Usage**: Question analysis, reformulation, and final answer generation
+- **Local Processing**: No external API calls required
+
+**Gemma 3 270M via Ollama** (Tool Model)
+- **Model Size**: ~291MB (ultra-lightweight)
+- **RAM Required**: ≈1GB
+- **Features**: Ultra-fast inference, optimized for tool calls and document retrieval
+- **Performance**: Lightning-fast processing for structured output and JSON generation
+- **Usage**: Tool calls and document retrieval queries
 - **Local Processing**: No external API calls required
 
 **Embeddings Multilingues**
@@ -48,14 +61,41 @@ It processes PDF documents, creates embeddings, and uses **Llama 3.2 1B** via Ol
 
 ## 📋 How It Works
 
-This is a **stateless Q&A system**, meaning each question is processed independently without memory of previous interactions. This design choice provides:
+This is a **stateless Q&A system** with intelligent question analysis and routing:
 
-- **Optimal Performance**: No context accumulation means faster response times
+### Workflow Architecture
+
+1. **Question Analysis** (Gemma 2 2B)
+   - Reformulates questions for optimal document retrieval
+   - Determines legal relevance and scope
+   - Identifies specific legal domains
+
+2. **Conditional Routing**
+   - Legal questions → Document retrieval and analysis
+   - Non-legal questions → General response
+
+3. **Document Retrieval** (Gemma 3 270M)
+   - Structured tool calls with Pydantic validation
+   - Multi-question support for comprehensive search
+   - Optimized query generation
+
+4. **Final Answer Generation** (Gemma 2 2B)
+   - Structured legal responses with:
+     - Direct answer (Légal/Illégal/Partiellement légal)
+     - Legal basis with specific references
+     - Conditions and requirements
+     - Practical consequences
+     - Recommendations
+
+### Design Benefits
+
+- **Optimal Performance**: Intelligent routing optimizes model usage
 - **Consistent Results**: Each answer is based solely on the documents, not conversation history
-- **Resource Efficiency**: Lower memory usage and computational overhead
-- **Reliability**: No risk of context confusion or drift over time
+- **Resource Efficiency**: Specialized models for different tasks
+- **Reliability**: Structured output prevents parsing errors
+- **Enhanced Accuracy**: Multi-step analysis improves response quality
 
-**Note**: This is not a conversational chatbot but rather an intelligent document-based Q&A assistant.
+**Note**: This is not a conversational chatbot but rather an intelligent document-based legal analysis assistant.
 
 ---
 
@@ -65,11 +105,15 @@ This is a **stateless Q&A system**, meaning each question is processed independe
 
 **Option 1: Local Development**
 1. **Install Ollama**: Download from [ollama.ai](https://ollama.ai)
-2. **Pull the model**: `ollama pull gemma2:2b`
+2. **Pull the models**: 
+   ```bash
+   ollama pull gemma2:2b
+   ollama pull gemma3:270m
+   ```
 
 **Option 2: Docker Deployment (Recommended)**
 1. **Install Docker**: Download from [docker.com](https://docker.com)
-2. **No additional setup needed** - Ollama and model are included in the container
+2. **No additional setup needed** - Ollama and models are included in the container
 
 ### Setup
 
@@ -101,7 +145,8 @@ Create a `.env` file in the project root:
 # Hugging Face Configuration
 HF_TOKEN=your_huggingface_token
 # Ollama configuration (no API key needed for local models)
-OLLAMA_MODEL=gemma2:2b
+OLLAMA_MODEL_MAIN=gemma2:2b
+OLLAMA_MODEL_TOOL=gemma3:270m
 
 # LangSmith Configuration (Optional - for tracing and monitoring)
 LANGCHAIN_API_KEY=your_langsmith_api_key_here
@@ -205,7 +250,7 @@ docker-compose down
 
 ### Container Features
 
-- ✅ **Ollama pre-installed** with Llama 3.2 1B
+- ✅ **Ollama pre-installed** with Gemma models
 - ✅ **Model persistence** between container restarts
 - ✅ **Automatic model download** on first run
 - ✅ **Health checks** for monitoring
@@ -252,9 +297,16 @@ french-ai-law-guru/
 │   └── utils.py                # Document processing, embeddings, and caching utilities
 │
 ├── legal_docs/                  # PDF documents for processing
-│   ├── AI ACT.pdf             # AI Act regulation document
-│   ├── GDPR.pdf               # GDPR regulation document
-│   └── faqs.json              # FAQ data (legacy format)
+│   ├── CELEX_32001L0029_EN_TXT.pdf  # EU Directives and Regulations
+│   ├── CELEX_32016R0679_EN_TXT.pdf  # GDPR Regulation
+│   ├── CELEX_32019L0790_EN_TXT.pdf  # EU AI Act
+│   ├── CELEX_32022R1925_EN_TXT.pdf  # Additional EU Regulations
+│   ├── CELEX_32022R2065_EN_TXT.pdf  # EU Regulations
+│   ├── CELEX_32024L2853_EN_TXT.pdf  # Latest EU AI Regulations
+│   ├── CELEX_52022PC0165_EN_TXT.pdf # EU Proposals
+│   ├── CELEX_52022PC0496_EN_TXT.pdf # EU Proposals
+│   ├── joe_*.pdf              # French Official Journal documents
+│   └── OJ_L_*.pdf             # Official Journal L series documents
 │
 ├── chroma_db/                  # ChromaDB persistent storage (auto-created)
 │
@@ -278,13 +330,13 @@ french-ai-law-guru/
 ### Key Components
 
 - **`app.py`**: Main Streamlit interface with document processing and chat functionality
-- **`agents.py`**: LangGraph agent implementation for RAG workflow
+- **`agents.py`**: LangGraph agent implementation with question analysis, routing, and structured output
 - **`chat_handler.py`**: Handles question processing and answer generation
-- **`utils.py`**: Core utilities for PDF processing, embeddings, and caching
-- **`local_models.py`**: Ollama model client configuration for Llama 3.2 1B
-- **`config.py`**: Centralized configuration including LLM and embedding settings
+- **`utils.py`**: Core utilities for PDF processing, embeddings, caching, and token calculation
+- **`local_models.py`**: Ollama model client configuration for Gemma models
+- **`config.py`**: Centralized configuration including multi-model LLM and embedding settings
 - **`chroma_db/`**: Stores processed vectorstores for faster loading
-- **`legal_docs/`**: Contains PDF documents that the chatbot processes
+- **`legal_docs/`**: Contains EU and French legal PDF documents for processing
 
 ## 🔍 LangSmith Integration
 
@@ -309,31 +361,33 @@ This chatbot includes built-in LangSmith integration for monitoring, tracing, an
 ### Advanced Configuration
 For detailed setup instructions, see the configuration files in the project.
 
-> **💡 Tip**: The app automatically uses the `gemma2:2b` model configured in `legal_ai_assistant/config.py`. You can modify the model settings there if needed.
+> **💡 Tip**: The app automatically uses the multi-model configuration in `legal_ai_assistant/config.py`. You can modify the model settings there if needed.
 
 ## ⚡ Performance Optimization
 
-This application is optimized for **high-quality inference** using the Gemma 2 2B model:
+This application is optimized for **high-quality inference** using a multi-model architecture:
 
 ### Current Configuration
 
-| Aspect | Gemma 2 2B |
-|--------|------------|
-| **Inference Time** | 15-25 seconds |
-| **Model Size** | 1.6GB |
-| **RAM Required** | ≈3GB |
-| **Context Window** | 4096 tokens |
-| **Response Quality** | Superior for Q&A with citations |
-| **Use Case** | High-quality legal document analysis |
+| Aspect | Gemma 2 2B | Gemma 3 270M |
+|--------|------------|--------------|
+| **Inference Time** | 15-25 seconds | 2-5 seconds |
+| **Model Size** | 1.6GB | 291MB |
+| **RAM Required** | ≈3GB | ≈1GB |
+| **Context Window** | 2048 tokens | 512 tokens |
+| **Response Quality** | Superior for Q&A with citations | Optimized for tool calls |
+| **Use Case** | Analysis & final answers | Tool calls & retrieval |
 
 ### Performance Features
 
-- **Comprehensive responses**: Optimized for detailed Q&A with full citations
-- **Memory efficient**: Optimized model with balanced RAM usage
+- **Intelligent routing**: Questions are analyzed and routed to appropriate models
+- **Structured output**: Pydantic models ensure robust JSON parsing and validation
+- **Comprehensive responses**: Optimized for detailed Q&A with full legal citations
+- **Memory efficient**: Multi-model architecture with optimized RAM usage
 - **CPU optimized**: Configured for maximum performance on CPU-only systems
-- **Context awareness**: Extended context window for complete conversations
-- **Document retrieval**: Enhanced context window for comprehensive document analysis
-- **No truncation**: 500-token responses ensure complete answers
+- **Context awareness**: Dynamic token calculation for optimal response length
+- **Enhanced legal analysis**: Structured legal responses with direct answers, legal basis, and consequences
+- **Multi-question support**: Tool calls can handle multiple reformulated questions simultaneously
 
 ## 🐳 Docker Support
 
