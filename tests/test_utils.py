@@ -18,6 +18,7 @@ def test_preprocess_pdfs_empty_list():
 
 def test_preprocess_pdfs_with_mock_docs():
     """Test preprocessing with mock document data."""
+
     # Create mock documents
     class MockDoc:
         def __init__(self, content, source):
@@ -26,7 +27,7 @@ def test_preprocess_pdfs_with_mock_docs():
 
     mock_docs = [
         MockDoc("Test content 1", "legal_docs/test1.pdf"),
-        MockDoc("Test content 2", "legal_docs/test2.pdf")
+        MockDoc("Test content 2", "legal_docs/test2.pdf"),
     ]
 
     # Test preprocessing

@@ -14,85 +14,77 @@ This module contains all configuration settings for:
 # LLM MODEL CONFIGURATIONS
 # =============================================================================
 
-# Primary model (Gemma 2 2B) - Used for analysis and final answers
+# Primary model (Gemma 2 2B) - Optimized for CPU inference
 LLM_CONFIG = {
     "model_name": "gemma2:2b",
     "size": "~1.6GB (Ollama optimized)",
     "ram_required": "≈3GB",
-    "description": "Gemma 2 2B - Google's latest efficient model for fast inference",
-
-    # Text generation parameters - Increased for comprehensive responses
-    "max_new_tokens": 500,   # Increased for more detailed legal analysis
-    "temperature": 0.1,      # Low temperature for deterministic output
-    "top_p": 0.7,            # Further reduced for faster sampling
-    "repeat_penalty": 1.02,  # Minimal penalty for speed
-
-    # Context configuration - Increased since document truncation was removed
-    "context_window": 2048,  # Increased for comprehensive legal analysis
-    "use_cache": True,       # Enables caching of intermediate calculations
-
-    # CPU optimizations - Optimized for speed
-    "num_threads": 8,        # Increased threads for better CPU utilization
-    "batch_size": 64,        # Reduced batch size for faster processing
-
-    # Ollama-specific parameters - Increased for better analysis
-    "num_ctx": 2048,         # Increased context size for comprehensive analysis
-    "num_gpu": 0,            # Number of GPUs used (0 = CPU only)
-    "top_k": 8,              # Further reduced for faster sampling
-    "num_batch": 32,         # Smaller batch size for faster processing
-    "use_mmap": True,        # Uses memory mapping to load the model
-    "use_mlock": False,      # Locks the model in memory (disabled for CPU)
-    "low_vram": True,        # Memory saving mode
-    "num_keep": 256,         # Minimal tokens to keep for speed
-    "tfs_z": 0.7,            # Further reduced Tail Free Sampling for speed
-    "typical_p": 0.6,        # Further reduced Typical Sampling for speed
-
+    "description": "Gemma 2 2B - Optimized for CPU inference",
+    # Text generation parameters
+    "max_new_tokens": 600,  # Increased for comprehensive legal analysis
+    "temperature": 0.1,  # Low temperature for deterministic output
+    "top_p": 0.8,  # Balanced for quality and speed
+    "repeat_penalty": 1.05,  # Slightly increased for better quality
+    # Context configuration
+    "context_window": 3072,  # Increased for comprehensive legal analysis
+    "use_cache": True,  # Enables caching of intermediate calculations
+    # CPU optimizations
+    "num_threads": 6,  # Optimized for multi-core CPU
+    "batch_size": 128,  # Increased batch size for better throughput
+    # Ollama-specific parameters
+    "num_ctx": 3072,  # Increased context size for comprehensive analysis
+    "num_gpu": 0,  # Number of GPUs used (0 = CPU only)
+    "top_k": 10,  # Balanced for quality and speed
+    "num_batch": 64,  # Increased batch size for better performance
+    "use_mmap": True,  # Uses memory mapping to load the model
+    "use_mlock": True,  # Locks the model in memory for better performance
+    "low_vram": False,  # Disabled for systems with sufficient RAM
+    "num_keep": 512,  # Increased tokens to keep for better context
+    "tfs_z": 0.8,  # Balanced Tail Free Sampling
+    "typical_p": 0.7,  # Balanced Typical Sampling
     # Quantization configuration
     "quantization": {
         "enabled": True,
-        "method": "q4_K_M",  # Quantization method used by Ollama
+        "method": "q4_K_M",  # Good balance of quality and speed
     },
     # CPU optimizations
     "cpu_optimization": {
         "enabled": True,
         "use_cache": True,
-        "low_cpu_mem_usage": True,
-    }
+        "low_cpu_mem_usage": False,  # Disabled for systems with sufficient RAM
+        "cpu_threads": 6,  # Optimized for multi-core CPU
+        "memory_pool_size": 8192,  # Memory pool for better performance
+    },
 }
 
-# Question analysis and tool calling model configuration - Fast model for preprocessing
-# Tool model (Gemma 3 270M) - Used for tool calls and document retrieval
+# Tool model (Gemma 3 270M) - Optimized for fast tool calls and analysis
 QUESTION_ANALYSIS_CONFIG = {
     "model_name": "gemma3:270m",
     "size": "~270MB (Ollama optimized)",
     "ram_required": "≈1GB",
-    "description": "Gemma 3 270M - Ultra-lightweight model for question analysis, reformulation, and tool calls",
-
-    # Text generation parameters - Optimized for speed
-    "max_new_tokens": 100,    # Short responses for analysis
-    "temperature": 0.1,       # Low temperature for deterministic output
-    "top_p": 0.7,            # Reduced for faster sampling
-    "repeat_penalty": 1.02,   # Minimal penalty for speed
-
-    # Context configuration - Minimal for fast processing
-    "context_window": 512,    # Small context for quick analysis
-    "use_cache": True,       # Enables caching
-
-    # CPU optimizations - Optimized for speed
-    "num_threads": 4,        # Fewer threads for lightweight model
-    "batch_size": 32,        # Small batch size for fast processing
-
-    # Ollama-specific parameters - Speed optimized
-    "num_ctx": 512,          # Small context size
-    "num_gpu": 0,            # Number of GPUs used (0 = CPU only)
-    "top_k": 8,              # Reduced for faster sampling
-    "num_batch": 16,         # Small batch size for fast processing
-    "use_mmap": True,        # Uses memory mapping to load the model
-    "use_mlock": False,      # Locks the model in memory (disabled for CPU)
-    "low_vram": True,        # Memory saving mode
-    "num_keep": 64,          # Minimal tokens to keep for speed
-    "tfs_z": 0.7,            # Tail Free Sampling for speed
-    "typical_p": 0.6,        # Typical Sampling for speed
+    "description": "Gemma 3 270M - Optimized for fast tool calls and analysis",
+    # Text generation parameters
+    "max_new_tokens": 150,  # Increased for better tool call generation
+    "temperature": 0.1,  # Low temperature for deterministic output
+    "top_p": 0.8,  # Balanced for quality and speed
+    "repeat_penalty": 1.05,  # Slightly increased for better quality
+    # Context configuration
+    "context_window": 1024,  # Increased for better tool call context
+    "use_cache": True,  # Enables caching
+    # CPU optimizations
+    "num_threads": 4,  # Optimized for lightweight model
+    "batch_size": 64,  # Increased batch size for better throughput
+    # Ollama-specific parameters
+    "num_ctx": 1024,  # Increased context size for better tool calls
+    "num_gpu": 0,  # Number of GPUs used (0 = CPU only)
+    "top_k": 10,  # Balanced for quality and speed
+    "num_batch": 32,  # Increased batch size for better performance
+    "use_mmap": True,  # Uses memory mapping to load the model
+    "use_mlock": True,  # Locks the model in memory for better performance
+    "low_vram": False,  # Disabled for systems with sufficient RAM
+    "num_keep": 128,  # Increased tokens to keep for better context
+    "tfs_z": 0.8,  # Balanced Tail Free Sampling
+    "typical_p": 0.7,  # Balanced Typical Sampling
 }
 
 # =============================================================================
@@ -102,18 +94,38 @@ QUESTION_ANALYSIS_CONFIG = {
 # Multilingual embedding model configuration
 EMBEDDING_CONFIG = {
     "model_name": "sentence-transformers/distiluse-base-multilingual-cased",
-    "batch_size": 32,        # Batch size for embedding processing
+    "batch_size": 64,  # Increased batch size for better throughput
     "normalize_embeddings": True,  # Normalizes embedding vectors
-    "show_progress": True,   # Shows progress bar during loading
-    "description": "Multilingual model optimized for French-English",
-    "supported_languages": ["fr", "en", "de", "es", "it", "pt", "nl", "pl", "ru", "tr", "ar", "zh", "ja", "ko", "hi"],
+    "show_progress": True,  # Shows progress bar during loading
+    "description": "Multilingual model optimized for CPU inference",
+    "supported_languages": [
+        "fr",
+        "en",
+        "de",
+        "es",
+        "it",
+        "pt",
+        "nl",
+        "pl",
+        "ru",
+        "tr",
+        "ar",
+        "zh",
+        "ja",
+        "ko",
+        "hi",
+    ],
+    "device": "cpu",  # Explicitly use CPU
+    "max_seq_length": 512,  # Optimized sequence length
 }
 
 # Vector database configuration
 VECTORSTORE_CONFIG = {
-    "collection_name": "legal_docs",   # Collection name in ChromaDB
+    "collection_name": "legal_docs",  # Collection name in ChromaDB
     "persist_directory": "./chroma_db",  # Persistent storage directory
-    "max_context_length": 800,         # Increased since document truncation was removed
+    "max_context_length": 1200,  # Increased for comprehensive legal analysis
+    "distance_metric": "cosine",  # Cosine similarity for better legal document matching
+    "embedding_function": "sentence-transformers",  # Explicit embedding function
 }
 
 # =============================================================================
@@ -122,9 +134,9 @@ VECTORSTORE_CONFIG = {
 
 # User interface configuration
 APP_CONFIG = {
-    "title": "French AI Law Assistant",    # Application title
-    "page_layout": "wide",                 # Streamlit page layout
-    "initial_sidebar_state": "expanded",   # Initial sidebar state
-    "max_top_k": 4,                        # Maximum number of documents to retrieve
-    "default_top_k": 3,                    # Default number of documents to retrieve (optimized for quality)
+    "title": "French AI Law Assistant",  # Application title
+    "page_layout": "wide",  # Streamlit page layout
+    "initial_sidebar_state": "expanded",  # Initial sidebar state
+    "max_top_k": 6,  # Maximum documents for comprehensive analysis
+    "default_top_k": 4,  # Default documents for better legal analysis
 }

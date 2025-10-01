@@ -56,6 +56,7 @@ def create_local_llm(config=None):
         print(f"Make sure Ollama is running and the model '{model_name}' is installed.")
         print(f"To install the model, run: ollama pull {model_name}")
         import traceback
+
         traceback.print_exc()
         return None
 
@@ -65,16 +66,17 @@ def get_model_info():
     return {
         "size": LLM_CONFIG["size"],
         "ram_required": LLM_CONFIG["ram_required"],
-        "description": LLM_CONFIG["description"]
+        "description": LLM_CONFIG["description"],
     }
 
 
 def get_embedding_info():
     """Get information about the configured embedding model."""
     from .config import EMBEDDING_CONFIG
+
     return {
         "size": "~135MB",
         "languages_count": len(EMBEDDING_CONFIG["supported_languages"]),
         "supported_languages": EMBEDDING_CONFIG["supported_languages"],
-        "description": EMBEDDING_CONFIG["description"]
+        "description": EMBEDDING_CONFIG["description"],
     }
