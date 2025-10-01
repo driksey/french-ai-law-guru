@@ -25,7 +25,9 @@ load_dotenv()
 st.set_page_config(
     page_title=str(APP_CONFIG["title"]),
     layout=cast(Literal["centered", "wide"], APP_CONFIG["page_layout"]),
-    initial_sidebar_state=cast(Literal["auto", "expanded", "collapsed"], APP_CONFIG["initial_sidebar_state"])
+    initial_sidebar_state=cast(
+        Literal["auto", "expanded", "collapsed"], 
+        APP_CONFIG["initial_sidebar_state"])
 )
 
 # Custom CSS to expand sidebar and improve spacing

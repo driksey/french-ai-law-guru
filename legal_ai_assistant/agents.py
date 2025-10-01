@@ -99,6 +99,11 @@ Transform any question into a version that is:
 3. Specific, avoiding vague terms and including relevant keywords for retrieval
 4. Focused on the core topic of the question
 5. Concise but rich enough to maximize relevant document matches
+6. Include specific legal concepts (
+    e.g., "GDPR compliance", "data transfer", "legal obligations")
+7. Add relevant legal frameworks when applicable (
+    e.g., "under EU law", "according to French regulations")
+8. Break down complex questions into specific legal aspects if needed
 
 **Legal Classification Criteria:**
 A question is considered LEGAL (is_legal: true) if it involves:
@@ -311,18 +316,53 @@ def _find_user_question(messages):
 
 def _create_final_prompt(user_question, tool_content, lang_detected, max_tokens):
     """Create the final answer prompt."""
-    return f"""You are a legal assistant.
+    return f"""You are a legal assistant specialized in French and European law.
+
 Question (language={lang_detected}): {user_question}
 
-Documents:
+Legal Documents Retrieved:
 {tool_content}
 
-Answer with:
-- Respond in the SAME LANGUAGE as the question
-- Concise but complete explanation
-- Cite exact legal references (e.g., "Article 5, EU AI Act 2024")
-- No placeholders, only real citations
+**STRUCTURE YOUR RESPONSE AS FOLLOWS:**
+
+1. **DIRECT ANSWER** (Légal/Illégal/Partiellement légal):
+   - Start with a clear, direct answer to the legal question
+   - Avoid vague responses like "it depends" or "difficult to answer"
+
+2. **LEGAL BASIS**:
+   - Cite specific legal references (
+       e.g., "Article 44 GDPR", "Article 5 EU AI Act 2024")
+   - Include relevant jurisprudence (
+       e.g., "Schrems II case", "CNIL decision 2023-XX")
+   - Reference exact regulation names and article numbers
+
+3. **CONDITIONS/REQUIREMENTS**:
+   - List specific conditions that must be met
+   - Explain exceptions or special cases
+   - Include procedural requirements
+
+4. **PRACTICAL CONSEQUENCES**:
+   - Mention potential sanctions, fines, or legal risks
+   - Include compliance obligations
+   - Reference enforcement authorities (CNIL, DGCCRF, etc.)
+
+5. **RECOMMENDATIONS**:
+   - Provide practical next steps
+   - Suggest when to consult legal experts
+
+**RESPONSE REQUIREMENTS:**
+- Respond in the SAME LANGUAGE as the question ({lang_detected})
+- Be specific and actionable, not generic
+- Use proper legal terminology
 - Keep response under {max_tokens} tokens to avoid truncation
+- If documents don't contain enough information, clearly state what additional information is needed
+
+**EXAMPLE STRUCTURE:**
+"**DIRECT ANSWER:** Non, ce transfert est illégal sans mesures de conformité spécifiques.
+
+**LEGAL BASIS:** Article 44-49 GDPR sur les transferts internationaux, Schrems II (CJUE 2020)...
+
+**CONDITIONS:** Consentement explicite, SCCs, assessment d'adéquation..."
 """
 
 
@@ -349,10 +389,13 @@ def create_final_answer(state: MessagesState, chat_model):
         lang_detected = None
 
     # Calculate dynamic response length limit using actual content
-    max_response_tokens = calculate_max_response_tokens(latest_tool_message.content, user_question)
+    max_response_tokens = calculate_max_response_tokens(
+        latest_tool_message.content, user_question)
 
     # Create prompt and generate answer
-    final_prompt = _create_final_prompt(user_question, latest_tool_message.content, lang_detected, max_response_tokens)
+    final_prompt = _create_final_prompt(
+        user_question, latest_tool_message.content, lang_detected, 
+        max_response_tokens)
 
     try:
         response = chat_model.invoke(final_prompt)
@@ -360,7 +403,8 @@ def create_final_answer(state: MessagesState, chat_model):
         return {"messages": [AIMessage(content=final_answer)]}
     except Exception as e:
         print(f"[ERROR] Failed to generate final answer: {e}")
-        return {"messages": [AIMessage(content="I apologize, but I encountered an error while generating the final answer.")]}
+        return {"messages": [AIMessage(
+            content="I apologize, but I encountered an error while generating the final answer.")]}
 
 
 # ---------- QUESTION ANALYSIS NODE ----------
@@ -368,7 +412,8 @@ def analyze_question(state: dict, question_model):
     """Analyze and reformulate the user question, and check if it's legal-related."""
     messages = state.get("messages", [])
     if not messages:
-        return {"messages": [AIMessage(content="No question found to analyze.")]}
+        return {"messages": [AIMessage(
+            content="No question found to analyze.")]}
 
     # Get the latest user message
     user_message = None
@@ -378,18 +423,21 @@ def analyze_question(state: dict, question_model):
             break
 
     if not user_message:
-        return {"messages": [AIMessage(content="No user question found to analyze.")]}
+        return {"messages": [AIMessage(
+            content="No user question found to analyze.")]}
 
     original_question = user_message.content
 
     try:
         # Use structured output for robust JSON parsing
-        structured_model = question_model.with_structured_output(QuestionAnalysis)
+        structured_model = question_model.with_structured_output(
+            QuestionAnalysis)
         prompt = create_analysis_prompt()
         structured_chain = prompt | structured_model
 
         # Get structured analysis
-        analysis_result = structured_chain.invoke({"question": original_question})
+        analysis_result = structured_chain.invoke(
+            {"question": original_question})
 
         # Create analysis result message with metadata
         analysis_message = AIMessage(
@@ -470,7 +518,8 @@ If you have a legal question, please feel free to reformulate it or ask me a new
 
 
 # ---------- MAIN BUILDER ----------
-def create_rag_agent(main_model, retriever, question_model=None, tool_model=None):
+def create_rag_agent(
+    main_model, retriever, question_model=None, tool_model=None):
     """
     Create RAG agent with specialized model usage:
     - main_model (gemma2:2b): Question analysis, reformulation, and final answer generation
@@ -486,11 +535,18 @@ def create_rag_agent(main_model, retriever, question_model=None, tool_model=None
     workflow = StateGraph(MessagesState)
 
     # Add nodes with specialized model usage
-    workflow.add_node("question_analysis", lambda state: analyze_question(state, main_model))  # gemma2:2b
-    workflow.add_node("agent", lambda state: call_model(state, effective_tool_model))      # gemma3:270m
-    workflow.add_node("tools", tool_node)                                                        # No model needed
-    workflow.add_node("final_answer", lambda state: create_final_answer(state, main_model))      # gemma2:2b
-    workflow.add_node("general_response", provide_general_response)                              # No model needed
+    # gemma2:2b
+    workflow.add_node("question_analysis", 
+                      lambda state: analyze_question(state, main_model))
+    # gemma3:270m
+    workflow.add_node("agent", lambda state: call_model(state, effective_tool_model))
+    # No model needed
+    workflow.add_node("tools", tool_node)
+    # gemma2:2b
+    workflow.add_node("final_answer", 
+                      lambda state: create_final_answer(state, main_model))
+    # No model needed
+    workflow.add_node("general_response", provide_general_response)
 
     # Add edges
     workflow.add_edge(START, "question_analysis")

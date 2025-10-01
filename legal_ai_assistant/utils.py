@@ -23,7 +23,8 @@ def load_pdfs(path=str):
 
 
 def preprocess_pdfs(pdfs):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=100)
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=600, chunk_overlap=100)
     docs = text_splitter.split_documents(pdfs)
     for doc in docs:
         # Extract the parent directory name from the file path
@@ -145,29 +146,43 @@ def estimate_tokens_from_chars(text: str) -> int:
         base_ratio = 3.2
 
     # Adjust for legal terminology (longer words, complex sentences)
-    avg_word_length = char_count / max(text.count(' ') + text.count('\n') + 1, 1)
+    avg_word_length = char_count / max(
+        text.count(' ') + text.count('\n') + 1, 1)
     if avg_word_length > 8:  # Legal text tends to have longer words
         base_ratio *= 0.9  # More tokens needed
 
     return int(char_count / base_ratio)
 
 
-def calculate_max_response_tokens(doc_content: str, user_question: str = "", workflow_overhead: int = 100) -> int:
+def calculate_max_response_tokens(doc_content: str, user_question: str = "", 
+                                  workflow_overhead: int = 100) -> int:
     """Calculate maximum response tokens based on actual content length."""
+
+    # Validate input types
+    if not isinstance(doc_content, str):
+        raise TypeError(
+            f"doc_content must be a string, got {type(doc_content).__name__}")
+    if not isinstance(user_question, str):
+        raise TypeError(f"user_question must be a string, "
+                        f"got {type(user_question).__name__}")
+    if not isinstance(workflow_overhead, int):
+        raise TypeError(f"workflow_overhead must be an integer, "
+                        f"got {type(workflow_overhead).__name__}")
 
     # Base context window - increased since we removed document truncation
     total_context: int = cast(int, LLM_CONFIG["context_window"])
 
     # Use improved token estimation for actual content
     doc_content_tokens = estimate_tokens_from_chars(doc_content)
-    user_question_tokens = estimate_tokens_from_chars(user_question) if user_question else 50
+    user_question_tokens = estimate_tokens_from_chars(
+        user_question) if user_question else 50
 
     # More realistic estimates based on actual prompt structure
     system_prompt_tokens = 120  # More accurate for legal assistant prompt
     prompt_formatting_tokens = 150  # Includes structure, instructions, formatting
 
     # Dynamic overhead based on number of documents (more docs = more structure)
-    doc_count_overhead = min(50, len(doc_content.split('\n\n')) * 5)  # Per document overhead
+    doc_count_overhead = min(50, len(doc_content.split('\n\n')) * 5)
 
     # Total reserved tokens
     reserved_tokens = (system_prompt_tokens + user_question_tokens +
