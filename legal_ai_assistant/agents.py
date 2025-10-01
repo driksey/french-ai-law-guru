@@ -1,4 +1,14 @@
 # agents.py
+"""
+LangGraph agents implementation for the French AI Law Assistant.
+
+This module contains:
+- Pydantic models for structured output
+- Tool definitions and nodes
+- Prompt templates for different tasks
+- Agent workflow implementation
+- Question analysis and routing logic
+"""
 
 import json
 import re
@@ -17,13 +27,31 @@ from legal_ai_assistant.utils import (
 )
 
 
-# ---------- SCHEMA ----------
+# =============================================================================
+# PYDANTIC MODELS FOR STRUCTURED OUTPUT
+# =============================================================================
+
+class QuestionAnalysis(BaseModel):
+    """Model for question analysis and reformulation output."""
+    reformulated_question: str = Field(
+        description="Reformulated and clarified question")
+    is_legal: bool = Field(
+        description="Whether the question concerns law/legal matters")
+    scope: str = Field(
+        description="Legal scope/domain if applicable (e.g., 'fair markets', "
+                   "'digital services', 'defective products')")
+
+
 class ToolCallSchema(BaseModel):
+    """Model for structured tool call output."""
     name: str = Field(description="Function name")
     arguments: dict = Field(description="Function arguments")
 
 
-# ---------- TOOL NODE ----------
+# =============================================================================
+# TOOL DEFINITIONS AND NODES
+# =============================================================================
+
 class BasicToolNode:
     def __init__(self, tools: List[Tool]) -> None:
         self.tools_by_name = {tool.name: tool for tool in tools}
@@ -63,7 +91,6 @@ class BasicToolNode:
         return {"messages": outputs}
 
 
-# ---------- RAG TOOL ----------
 def create_rag_tool(retriever):
     return Tool(
         name="tool_rag",
@@ -72,61 +99,186 @@ def create_rag_tool(retriever):
     )
 
 
-# ---------- PROMPT STRICT JSON ----------
-def create_prompt_strict(language_hint: str | None = None):
-    language_text = language_hint if language_hint else "detect automatically"
-    
+# =============================================================================
+# PROMPT TEMPLATES
+# =============================================================================
+
+def create_analysis_prompt():
+    """Create prompt for question analysis and reformulation."""
     system_template = """
-You are an assistant specialized in analyzing user questions.
+You are an expert legal classifier and document retrieval specialist.
+
+**Your tasks:**
+1. Reformulate the question for optimal document retrieval
+2. Determine if the question is of a legal nature
+3. Identify the specific legal scope/domain if applicable
+
+**Question Reformulation Guidelines:**
+Transform any question into a version that is:
+1. Clear and grammatically correct
+2. Complete, including any implicit context needed to understand the query fully
+3. Specific, avoiding vague terms and including relevant keywords for retrieval
+4. Focused on the core topic of the question
+5. Concise but rich enough to maximize relevant document matches
+6. Include specific legal concepts (
+    e.g., "GDPR compliance", "data transfer", "legal obligations")
+7. Add relevant legal frameworks when applicable (
+    e.g., "under EU law", "according to French regulations")
+8. Break down complex questions into specific legal aspects if needed
+
+**Legal Classification Criteria:**
+A question is considered LEGAL (is_legal: true) if it involves:
+- Laws, regulations, statutes, or legal frameworks
+- Rights and obligations (individual, corporate, governmental)
+- Contracts, agreements, or legal clauses
+- Legal procedures, compliance, or litigation
+- Intellectual property, labor, corporate, or commercial law
+- Data protection, privacy, or cybersecurity regulations
+- AI regulations, digital services, or technology law
+- Any aspect where legal advice, references, or interpretations would be relevant
+
+A question is considered NON-LEGAL (is_legal: false) if it involves:
+- Pure technical questions (e.g., "How to install software?")
+- General knowledge questions (e.g., "What is the capital of France?")
+- Personal opinions or preferences
+- Questions unrelated to legal matters
+
+**Response Format:**
+Respond ONLY with valid JSON containing:
+1. "reformulated_question": "optimized question for document retrieval with clear context and relevant keywords"
+2. "is_legal": true or false (based on criteria above)
+3. "scope": "legal domain" (e.g., "data protection law", "AI regulation", "labor law", "contract law") if legal, otherwise "general"
+
+Example 1 (Legal):
+{{
+  "reformulated_question": "What are the specific legal obligations and compliance requirements for AI systems under EU AI Act and GDPR regulations?",
+  "is_legal": true,
+  "scope": "AI regulation"
+}}
+
+Example 2 (Non-legal):
+{{
+  "reformulated_question": "How do I install and configure Python programming language on my computer?",
+  "is_legal": false,
+  "scope": "general"
+}}
+
+Response:"""
+
+    return ChatPromptTemplate.from_messages([
+        ("system", system_template),
+        ("human", "{question}")
+    ])
+
+
+# ---------- PROMPT STRICT JSON ----------
+def create_prompt_strict(scope: str | None = None):
+    scope_text = " (Scope: " + str(scope) + ")" if scope else ""
+
+    system_template = """
+You are a legal assistant specialized in French and European law.
 Follow these rules strictly:
 
-1. Language: Always respond in the same language as the user's question (""" + language_text + """).
-
-2. **Legal Question Detection**:
-   - If the question is legal in nature (laws, rights, contracts, regulations,
-     case law, legal obligations, etc.):
-     - Reformulate the question to make it clearer, more detailed, and precise
-       for document retrieval.
-     - Respond **only** with a JSON tool call in the following format,
-       with no additional text:  
+**Document Retrieval**:
+   - Always use the tool_rag to search for relevant legal documents
+   - Include the legal scope/domain in your query for better document retrieval""" + scope_text + """
+   - If a scope is provided above, incorporate it into your search query to find more relevant documents
+   - If multiple questions were reformulated, combine them ALL into a single comprehensive query
+   - Respond **only** with a JSON tool call in the following format,
+     with no additional text:
 {{
   "name": "tool_rag",
   "arguments": {{
-    "query": "<reformulated complete legal question with context>"
+    "query": "YOUR ACTUAL REFORMULATED QUESTION(S) HERE"
   }}
 }}
-   - Do not add any explanations, comments, or extra text outside this JSON.  
-
-3. **Non-Legal Questions**:  
-   - If the question is not legal in nature, respond normally and directly, without any tool call or JSON.  
+   - Replace "YOUR ACTUAL REFORMULATED QUESTION(S) HERE" with the actual reformulated legal question(s)
+   - If there are multiple questions, include ALL of them in the query for comprehensive search
+   - Do not include the placeholder text, use the real question(s) instead
+   - Example 1 (single): If user asks "AI rules?", respond with: {{"name": "tool_rag", "arguments": {{"query": "What are the legal regulations and compliance requirements for artificial intelligence systems under EU law?"}}}}
+   - Example 2 (multiple): If there are multiple questions like "AI obligations?" and "GDPR compliance?", combine them: {{"name": "tool_rag", "arguments": {{"query": "What are the legal obligations for AI systems under EU law? What are the GDPR compliance requirements for AI systems?"}}}}
+   - Do not add any explanations, comments, or extra text outside this JSON.
 """
-    
+
     return ChatPromptTemplate.from_messages([
         ("system", system_template),
         MessagesPlaceholder("history")
     ])
 
 
-# ---------- MODEL CALL ----------
+def _create_final_prompt(user_question, tool_content, lang_detected, max_tokens):
+    """Create the final answer prompt."""
+    return f"""You are a legal assistant specialized in French and European law.
+
+Question (language={lang_detected}): {user_question}
+
+Legal Documents Retrieved:
+{tool_content}
+
+**STRUCTURE YOUR RESPONSE AS FOLLOWS:**
+
+1. **DIRECT ANSWER** (Légal/Illégal/Partiellement légal):
+   - Start with a clear, direct answer to the legal question
+   - Avoid vague responses like "it depends" or "difficult to answer"
+
+2. **LEGAL BASIS**:
+   - Cite specific legal references (e.g., "Article 44 GDPR", "Article 5 EU AI Act 2024")
+   - Include relevant jurisprudence (e.g., "Schrems II case", "CNIL decision 2023-XX")
+   - Reference exact regulation names and article numbers
+
+3. **CONDITIONS/REQUIREMENTS**:
+   - List specific conditions that must be met
+   - Explain exceptions or special cases
+   - Include procedural requirements
+
+4. **PRACTICAL CONSEQUENCES**:
+   - Mention potential sanctions, fines, or legal risks
+   - Include compliance obligations
+   - Reference enforcement authorities (CNIL, DGCCRF, etc.)
+
+5. **RECOMMENDATIONS**:
+   - Provide practical next steps
+   - Suggest when to consult legal experts
+
+**RESPONSE REQUIREMENTS:**
+- Respond in the SAME LANGUAGE as the question ({lang_detected})
+- Be specific and actionable, not generic
+- Use proper legal terminology
+- Keep response under {max_tokens} tokens to avoid truncation
+- If documents don't contain enough information, clearly state what additional information is needed
+
+**EXAMPLE STRUCTURE:**
+"**DIRECT ANSWER:** Non, ce transfert est illégal sans mesures de conformité spécifiques.
+
+**LEGAL BASIS:** Article 44-49 GDPR sur les transferts internationaux, Schrems II (CJUE 2020)...
+
+**CONDITIONS:** Consentement explicite, SCCs, assessment d'adéquation..."
+"""
+
+
+# =============================================================================
+# UTILITY FUNCTIONS
+# =============================================================================
+
 def parse_tool_call(raw_content: str):
     """Robust JSON parsing using regex for better reliability."""
     candidates = []
-    
+
     # Remove markdown code blocks if present
     clean_content = raw_content.strip()
     if clean_content.startswith('```json'):
         clean_content = clean_content.replace('```json', '').replace('```', '').strip()
     elif clean_content.startswith('```'):
         clean_content = clean_content.replace('```', '').strip()
-    
+
     # Use regex to find JSON blocks between { and }
     json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
     json_blocks = re.findall(json_pattern, clean_content, re.DOTALL)
-    
+
     # If no blocks found, try the whole content
     if not json_blocks:
         json_blocks = [clean_content]
-    
+
     for block in json_blocks:
         try:
             parsed = json.loads(block.strip())
@@ -142,62 +294,6 @@ def parse_tool_call(raw_content: str):
 
     return candidates
 
-
-def call_model(state: MessagesState, chat_model, tools):
-    if chat_model is None:
-        raise ValueError("Chat model missing")
-
-    # Detect language of last user message
-    user_messages = [m for m in state["messages"] if isinstance(m, HumanMessage)]
-    last_user_msg = user_messages[-1].content if user_messages else "Hello"
-    try:
-        lang_detected = detect(last_user_msg)
-    except Exception:
-        lang_detected = None
-
-    prompt = create_prompt_strict(language_hint=lang_detected)
-    chat_model_with_prompt = prompt | chat_model
-
-    # Single call without retry mechanism
-    response = chat_model_with_prompt.invoke({"history": state["messages"]})
-    raw_content = response.content if hasattr(response, "content") else str(response)
-    tool_calls = parse_tool_call(raw_content)
-    
-    if tool_calls:
-        print("[OK] Tool call parsed successfully")
-
-    if isinstance(response, AIMessage):
-        response.tool_calls = tool_calls
-    else:
-        response = AIMessage(content=raw_content, tool_calls=tool_calls)
-
-    # Minimal logging for speed
-    return {"messages": [response]}
-
-
-# ---------- ROUTING ----------
-def route_tools(state: MessagesState):
-    """Route based on message types for robust workflow."""
-    messages = state if isinstance(state, list) else state.get("messages", [])
-    if not messages:
-        raise ValueError("No messages in route_tools")
-
-    ai_message = messages[-1]
-    
-    # If AI message has tool calls, go to tools
-    if getattr(ai_message, "tool_calls", []):
-        return "tools"
-    
-    # If we have tool messages in history, go to final answer
-    tool_messages = [msg for msg in messages if hasattr(msg, 'tool_call_id')]
-    if tool_messages:
-        return "final_answer"
-
-    # If no tool calls, end the conversation
-    return END
-
-
-# ---------- FINAL ANSWER ----------
 
 def _extract_messages_from_state(state: MessagesState):
     """Extract messages from state, handling both list and dict formats."""
@@ -217,21 +313,57 @@ def _find_user_question(messages):
     return "the user's question"
 
 
-def _create_final_prompt(user_question, tool_content, lang_detected, max_tokens):
-    """Create the final answer prompt."""
-    return f"""You are a legal assistant.
-Question (language={lang_detected}): {user_question}
+# =============================================================================
+# AGENT NODE FUNCTIONS
+# =============================================================================
 
-Documents:
-{tool_content}
+def analyze_question(state: dict, question_model):
+    """Analyze and reformulate the user question, and check if it's legal-related."""
+    messages = state.get("messages", [])
+    if not messages:
+        raise ValueError("No messages found in input state")
 
-Answer with:
-- Respond in the SAME LANGUAGE as the question
-- Concise but complete explanation
-- Cite exact legal references (e.g., "Article 5, EU AI Act 2024")
-- No placeholders, only real citations
-- Keep response under {max_tokens} tokens to avoid truncation
-"""
+    # Find the original user question
+    original_question = ""
+    for message in messages:
+        if isinstance(message, HumanMessage):
+            original_question = message.content
+            break
+
+    if not original_question:
+        raise ValueError(f"No user question found in input state: {state}")
+
+    try:
+        # Use structured output for robust parsing
+        structured_model = question_model.with_structured_output(QuestionAnalysis)
+        prompt = create_analysis_prompt()
+        structured_chain = prompt | structured_model
+
+        analysis_result = structured_chain.invoke({"question": original_question})
+
+        # Create analysis message with metadata
+        analysis_message = AIMessage(
+            content=analysis_result.reformulated_question,
+            additional_kwargs={
+                "is_legal": analysis_result.is_legal,
+                "reformulated_question": analysis_result.reformulated_question,
+                "scope": analysis_result.scope
+            }
+        )
+        return {"messages": [analysis_message]}
+
+    except Exception as e:
+        print(f"[ERROR] Question analysis failed: {e}")
+        # Fallback to original question
+        error_message = AIMessage(
+            content=original_question,
+            additional_kwargs={
+                "is_legal": True,
+                "reformulated_question": original_question,
+                "scope": "general"
+            }
+        )
+        return {"messages": [error_message]}
 
 
 def create_final_answer(state: MessagesState, chat_model):
@@ -240,30 +372,30 @@ def create_final_answer(state: MessagesState, chat_model):
 
     # Extract tool results
     tool_messages = [msg for msg in messages if hasattr(msg, 'tool_call_id')]
-    
+
     if not tool_messages:
         return {"messages": [AIMessage(content="No tool results found.")]}
 
     # Get the latest tool result
     latest_tool_message = tool_messages[-1]
-    
+
     # Find the original user question
     user_question = _find_user_question(messages)
-    
-    # Detect language for the final answer
+
+    # Detect language for the final answer to match user's original question
     try:
         lang_detected = detect(user_question)
     except Exception:
         lang_detected = None
 
-    # Calculate dynamic response length limit
-    doc_content_length = len(latest_tool_message.content)
-    num_docs = len(tool_messages)
-    max_response_tokens = calculate_max_response_tokens(doc_content_length, num_docs)
-    
+    # Calculate dynamic response length limit using actual content
+    max_response_tokens = calculate_max_response_tokens(
+        latest_tool_message.content, user_question)
+
     # Create prompt and generate answer
-    final_prompt = _create_final_prompt(user_question, latest_tool_message.content, 
-                                       lang_detected, max_response_tokens)
+    final_prompt = _create_final_prompt(
+        user_question, latest_tool_message.content, lang_detected, 
+        max_response_tokens)
 
     try:
         response = chat_model.invoke(final_prompt)
@@ -271,25 +403,190 @@ def create_final_answer(state: MessagesState, chat_model):
         return {"messages": [AIMessage(content=final_answer)]}
     except Exception as e:
         print(f"[ERROR] Failed to generate final answer: {e}")
-        return {"messages": [AIMessage(content="I apologize, but I encountered an error while generating the final answer.")]}
-    
+        return {"messages": [AIMessage(
+            content="I apologize, but I encountered an error while generating the final answer.")]}
 
-# ---------- MAIN BUILDER ----------
-def create_rag_agent(chat_model, retriever):
+
+def call_model(state: MessagesState, chat_model):
+    if chat_model is None:
+        raise ValueError("Chat model missing")
+
+    messages = state.get("messages", [])
+
+    # Extract scope from the last message if it has analysis data
+    scope = None
+    if messages:
+        last_message = messages[-1]
+        if hasattr(last_message, 'additional_kwargs') and last_message.additional_kwargs:
+            scope = last_message.additional_kwargs.get("scope", None)
+
+    try:
+        # Use structured output for robust tool call parsing
+        structured_model = chat_model.with_structured_output(ToolCallSchema)
+        prompt = create_prompt_strict(scope=scope)
+        structured_chain = prompt | structured_model
+
+        # Single call with structured output
+        tool_call_result = structured_chain.invoke({"history": messages})
+
+        # Convert to tool_calls format expected by LangGraph
+        tool_calls = [{
+            "name": tool_call_result.name,
+            "args": tool_call_result.arguments,
+            "id": "call_1"
+        }]
+
+        print("[OK] Tool call parsed successfully with structured output")
+
+        response = AIMessage(content="", tool_calls=tool_calls)
+
+    except Exception as e:
+        print(f"[ERROR] Structured tool call failed: {e}")
+        # Fallback to original method
+        prompt = create_prompt_strict(scope=scope)
+        chat_model_with_prompt = prompt | chat_model
+        response = chat_model_with_prompt.invoke({"history": messages})
+        raw_content = response.content if hasattr(response, "content") else str(response)
+        tool_calls = parse_tool_call(raw_content)
+
+        if isinstance(response, AIMessage):
+            response.tool_calls = tool_calls
+        else:
+            response = AIMessage(content=raw_content, tool_calls=tool_calls)
+
+    # Minimal logging for speed
+    return {"messages": [response]}
+
+
+# =============================================================================
+# ROUTING FUNCTIONS
+# =============================================================================
+
+def route_tools(state: MessagesState):
+    """Route based on message types for robust workflow."""
+    messages = state if isinstance(state, list) else state.get("messages", [])
+    if not messages:
+        raise ValueError("No messages in route_tools")
+
+    ai_message = messages[-1]
+
+    # If AI message has tool calls, go to tools
+    if getattr(ai_message, "tool_calls", []):
+        return "tools"
+
+    # If we have tool messages in history, go to final answer
+    tool_messages = [msg for msg in messages if hasattr(msg, 'tool_call_id')]
+    if tool_messages:
+        return "final_answer"
+
+    # If no tool calls, end the conversation
+    return END
+
+
+
+
+
+
+def route_after_analysis(state: dict):
+    """Route to legal agent if question is legal, otherwise provide general response."""
+    messages = state.get("messages", [])
+
+    # Extract analysis data from the last message
+    if messages:
+        last_message = messages[-1]
+        if hasattr(last_message, 'additional_kwargs') and last_message.additional_kwargs:
+            is_legal = last_message.additional_kwargs.get("is_legal", True)
+        else:
+            is_legal = True  # Default to legal for safety
+    else:
+        is_legal = True  # Default to legal for safety
+
+    if is_legal:
+        return "agent"  # Route to the main legal agent
+    else:
+        return "general_response"  # Route to general response
+
+
+def provide_general_response(state: dict):
+    """Provide a general response for non-legal questions."""
+    messages = state.get("messages", [])
+
+    # Extract reformulated question from the last message
+    reformulated_question = ""
+    if messages:
+        last_message = messages[-1]
+        if hasattr(last_message, 'additional_kwargs') and last_message.additional_kwargs:
+            reformulated_question = last_message.additional_kwargs.get("reformulated_question", "")
+        else:
+            reformulated_question = last_message.content if hasattr(last_message, 'content') else ""
+
+    response_content = f"""I am a legal assistant specialized in French and European law.
+
+Your question: "{reformulated_question}"
+
+This question does not appear to be directly related to the legal domain. I can help you with:
+- Questions about French and European law
+- Analysis of legal texts
+- Clarification of legal regulations
+- Advice on legal obligations
+
+If you have a legal question, please feel free to reformulate it or ask me a new question."""
+
+    return {"messages": [AIMessage(content=response_content)]}
+
+
+# =============================================================================
+# MAIN AGENT WORKFLOW
+# =============================================================================
+
+def create_rag_agent(
+    main_model, retriever, question_model=None, tool_model=None):
+    """
+    Create RAG agent with specialized model usage:
+    - main_model (gemma2:2b): Question analysis, reformulation, and final answer generation
+    - tool_model (gemma3:270m): Tool calls and document retrieval queries
+    - question_model: Legacy parameter for compatibility (unused, analyze_question uses main_model)
+    """
     tools = [create_rag_tool(retriever)]
     tool_node = BasicToolNode(tools)
 
-    workflow = StateGraph(MessagesState)
-    workflow.add_node("agent", lambda state: call_model(state, chat_model, tools))
-    workflow.add_node("tools", tool_node)
-    workflow.add_node("final_answer", lambda state: create_final_answer(state, chat_model))
+    # Use tool_model for tool calls, fallback to question_model, then main_model
+    effective_tool_model = tool_model or question_model or main_model
 
-    workflow.add_edge(START, "agent")
+    workflow = StateGraph(MessagesState)
+
+    # Add nodes with specialized model usage
+    # gemma2:2b
+    workflow.add_node("question_analysis", 
+                      lambda state: analyze_question(state, main_model))
+    # gemma3:270m
+    workflow.add_node("agent", lambda state: call_model(state, effective_tool_model))
+    # No model needed
+    workflow.add_node("tools", tool_node)
+    # gemma2:2b
+    workflow.add_node("final_answer", 
+                      lambda state: create_final_answer(state, main_model))
+    # No model needed
+    workflow.add_node("general_response", provide_general_response)
+
+    # Add edges
+    workflow.add_edge(START, "question_analysis")
+
+    # Route after question analysis
+    workflow.add_conditional_edges("question_analysis", route_after_analysis, {
+        "agent": "agent",
+        "general_response": "general_response"
+    })
+
+    # Main agent flow
     workflow.add_conditional_edges("agent", route_tools, {
         "tools": "tools",
         END: END
     })
     workflow.add_edge("tools", "final_answer")
     workflow.add_edge("final_answer", END)
+
+    # General response flow
+    workflow.add_edge("general_response", END)
 
     return workflow.compile()

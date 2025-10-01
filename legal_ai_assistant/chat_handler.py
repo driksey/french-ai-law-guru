@@ -29,13 +29,13 @@ def process_question_with_agent(agent, question):
         # Invoke the agent to get the answer
         result = agent.invoke({"messages": messages})
         answer = result["messages"][-1].content if result.get("messages") else "No answer generated"
-        
+
         # Check if tool_rag was used by looking for ToolMessage in the conversation
         was_rag_used = any(
-            hasattr(msg, 'tool_call_id') and msg.tool_call_id == "parsed-tool-call" 
+            hasattr(msg, 'tool_call_id') and msg.tool_call_id == "parsed-tool-call"
             for msg in result.get("messages", [])
         )
-        
+
     except Exception as e:
         print(f"[ERROR] Agent processing failed: {e}")
         answer = "Sorry, I cannot answer this question at the moment. Please try again."

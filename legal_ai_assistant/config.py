@@ -1,31 +1,42 @@
 # config.py
 """
-Centralized configuration for the FAQ chatbot
+Centralized configuration for the French AI Law Assistant.
+
+This module contains all configuration settings for:
+- LLM models (Gemma 2 2B and Gemma 3 270M)
+- Embedding models (multilingual support)
+- Vectorstore settings
+- Application settings
+- Performance optimization parameters
 """
 
-# LLM model configuration - Optimized for CPU only
+# =============================================================================
+# LLM MODEL CONFIGURATIONS
+# =============================================================================
+
+# Primary model (Gemma 2 2B) - Used for analysis and final answers
 LLM_CONFIG = {
     "model_name": "gemma2:2b",
     "size": "~1.6GB (Ollama optimized)",
     "ram_required": "≈3GB",
     "description": "Gemma 2 2B - Google's latest efficient model for fast inference",
 
-    # Text generation parameters - Optimized for speed and token efficiency
-    "max_new_tokens": 300,   # Further reduced for faster generation and less truncation risk
+    # Text generation parameters - Increased for comprehensive responses
+    "max_new_tokens": 500,   # Increased for more detailed legal analysis
     "temperature": 0.1,      # Low temperature for deterministic output
     "top_p": 0.7,            # Further reduced for faster sampling
     "repeat_penalty": 1.02,  # Minimal penalty for speed
 
-    # Context configuration - Optimized for token efficiency
-    "context_window": 1536,  # Further reduced for faster processing and token savings
+    # Context configuration - Increased since document truncation was removed
+    "context_window": 2048,  # Increased for comprehensive legal analysis
     "use_cache": True,       # Enables caching of intermediate calculations
-    
+
     # CPU optimizations - Optimized for speed
     "num_threads": 8,        # Increased threads for better CPU utilization
     "batch_size": 64,        # Reduced batch size for faster processing
-    
-    # Ollama-specific parameters - Speed and token optimized
-    "num_ctx": 1536,         # Further reduced context size for Ollama
+
+    # Ollama-specific parameters - Increased for better analysis
+    "num_ctx": 2048,         # Increased context size for comprehensive analysis
     "num_gpu": 0,            # Number of GPUs used (0 = CPU only)
     "top_k": 8,              # Further reduced for faster sampling
     "num_batch": 32,         # Smaller batch size for faster processing
@@ -49,6 +60,45 @@ LLM_CONFIG = {
     }
 }
 
+# Question analysis and tool calling model configuration - Fast model for preprocessing
+# Tool model (Gemma 3 270M) - Used for tool calls and document retrieval
+QUESTION_ANALYSIS_CONFIG = {
+    "model_name": "gemma3:270m",
+    "size": "~270MB (Ollama optimized)",
+    "ram_required": "≈1GB",
+    "description": "Gemma 3 270M - Ultra-lightweight model for question analysis, reformulation, and tool calls",
+
+    # Text generation parameters - Optimized for speed
+    "max_new_tokens": 100,    # Short responses for analysis
+    "temperature": 0.1,       # Low temperature for deterministic output
+    "top_p": 0.7,            # Reduced for faster sampling
+    "repeat_penalty": 1.02,   # Minimal penalty for speed
+
+    # Context configuration - Minimal for fast processing
+    "context_window": 512,    # Small context for quick analysis
+    "use_cache": True,       # Enables caching
+
+    # CPU optimizations - Optimized for speed
+    "num_threads": 4,        # Fewer threads for lightweight model
+    "batch_size": 32,        # Small batch size for fast processing
+
+    # Ollama-specific parameters - Speed optimized
+    "num_ctx": 512,          # Small context size
+    "num_gpu": 0,            # Number of GPUs used (0 = CPU only)
+    "top_k": 8,              # Reduced for faster sampling
+    "num_batch": 16,         # Small batch size for fast processing
+    "use_mmap": True,        # Uses memory mapping to load the model
+    "use_mlock": False,      # Locks the model in memory (disabled for CPU)
+    "low_vram": True,        # Memory saving mode
+    "num_keep": 64,          # Minimal tokens to keep for speed
+    "tfs_z": 0.7,            # Tail Free Sampling for speed
+    "typical_p": 0.6,        # Typical Sampling for speed
+}
+
+# =============================================================================
+# EMBEDDING AND VECTORSTORE CONFIGURATIONS
+# =============================================================================
+
 # Multilingual embedding model configuration
 EMBEDDING_CONFIG = {
     "model_name": "sentence-transformers/distiluse-base-multilingual-cased",
@@ -62,9 +112,13 @@ EMBEDDING_CONFIG = {
 # Vector database configuration
 VECTORSTORE_CONFIG = {
     "collection_name": "legal_docs",   # Collection name in ChromaDB
-    "persist_directory": "./chroma_db", # Persistent storage directory
-    "max_context_length": 400,         # Further reduced for token efficiency and speed
+    "persist_directory": "./chroma_db",  # Persistent storage directory
+    "max_context_length": 800,         # Increased since document truncation was removed
 }
+
+# =============================================================================
+# APPLICATION CONFIGURATION
+# =============================================================================
 
 # User interface configuration
 APP_CONFIG = {

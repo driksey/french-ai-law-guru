@@ -58,7 +58,7 @@ jobs:
     
     - name: Test token calculation
       run: |
-        python -c "from legal_ai_assistant.utils import calculate_max_response_tokens; result = calculate_max_response_tokens(1000, 3); print(f'Token calculation works: {result} tokens')"
+        python -c "from legal_ai_assistant.utils import calculate_max_response_tokens; result = calculate_max_response_tokens('This is a test document content with legal text', 'What are the legal requirements?'); print(f'Token calculation works: {result} tokens')"
     
     - name: Test prompt creation
       run: |

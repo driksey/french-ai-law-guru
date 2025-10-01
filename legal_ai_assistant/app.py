@@ -1,4 +1,15 @@
 # app.py
+"""
+Main Streamlit application for the French AI Law Assistant.
+
+This module contains:
+- Application initialization and configuration
+- Model loading and management
+- Vectorstore initialization
+- User interface components
+- Chat functionality
+"""
+
 import sys
 from pathlib import Path
 from typing import cast, Literal
@@ -8,9 +19,8 @@ from dotenv import load_dotenv
 
 from legal_ai_assistant.agents import create_rag_agent
 from legal_ai_assistant.chat_handler import process_question_with_agent
-from legal_ai_assistant.config import APP_CONFIG
+from legal_ai_assistant.config import APP_CONFIG, LLM_CONFIG, EMBEDDING_CONFIG, QUESTION_ANALYSIS_CONFIG
 from legal_ai_assistant.local_models import create_local_llm, get_model_info, get_embedding_info
-from legal_ai_assistant.config import LLM_CONFIG, EMBEDDING_CONFIG
 from legal_ai_assistant.utils import (
     load_or_create_vectorstore,
     load_pdfs,
@@ -18,15 +28,25 @@ from legal_ai_assistant.utils import (
     retrieve_documents,
 )
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+# =============================================================================
+# APPLICATION INITIALIZATION
+# =============================================================================
 
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 load_dotenv()
 
+# Streamlit page configuration
 st.set_page_config(
-    page_title=str(APP_CONFIG["title"]), 
+    page_title=str(APP_CONFIG["title"]),
     layout=cast(Literal["centered", "wide"], APP_CONFIG["page_layout"]),
-    initial_sidebar_state=cast(Literal["auto", "expanded", "collapsed"], APP_CONFIG["initial_sidebar_state"])
+    initial_sidebar_state=cast(
+        Literal["auto", "expanded", "collapsed"], 
+        APP_CONFIG["initial_sidebar_state"])
 )
+
+# =============================================================================
+# USER INTERFACE SETUP
+# =============================================================================
 
 # Custom CSS to expand sidebar and improve spacing
 st.markdown("""
@@ -54,15 +74,15 @@ with st.sidebar:
     # Model configuration
     st.markdown("### Model Configuration")
     st.info("🚀 Using Gemma 2 2B via Ollama (~3GB RAM)")
-    
+
     st.markdown("---")  # Separator line
 
     # Show model information in two columns
     model_info = get_model_info()
     embedding_info = get_embedding_info()
-    
+
     col1, col2 = st.columns(2)
-    
+
     with col1:
         st.markdown("**🤖 LLM Model**")
         st.markdown(f"**Model:** {LLM_CONFIG['model_name']}")
@@ -70,18 +90,18 @@ with st.sidebar:
         st.markdown(f"- RAM Required: {model_info['ram_required']}")
         st.markdown(f"- Description: {model_info['description']}")
         st.markdown("- Backend: Ollama (Local)")
-    
+
     with col2:
         st.markdown("**🔤 Embedding Model**")
         st.markdown(f"**Model:** {EMBEDDING_CONFIG['model_name']}")
         st.markdown(f"- Size: {embedding_info['size']}")
         st.markdown(f"- Languages: {embedding_info['languages_count']} languages")
-        st.markdown(f"- Cross-lingual: FR-EN optimized")
+        st.markdown("- Cross-lingual: FR-EN optimized")
         st.markdown(f"- Description: {embedding_info['description']}")
         st.markdown("- Backend: Hugging Face (Local)")
-    
+
     st.markdown("---")  # Separator line
-    
+
     # Expandable section for supported languages
     with st.expander("🌍 Supported Languages"):
         languages = embedding_info['supported_languages']
@@ -91,11 +111,11 @@ with st.sidebar:
             for lang in languages[:8]:  # First 8 languages
                 st.markdown(f"- {lang.upper()}")
         with col2:
-                for lang in languages[8:]:  # Remaining languages
-                    st.markdown(f"- {lang.upper()}")
+            for lang in languages[8:]:  # Remaining languages
+                st.markdown(f"- {lang.upper()}")
 
     st.markdown("---")  # Separator line
-    
+
     # Document retrieval settings
     st.markdown("### 📄 Document Retrieval")
     top_k = st.slider(
@@ -106,6 +126,11 @@ with st.sidebar:
     )
 
 
+# =============================================================================
+# MODEL AND VECTORSTORE INITIALIZATION
+# =============================================================================
+
+# Load and process documents
 path = "legal_docs"
 docs = load_pdfs(path)
 docs_processed = preprocess_pdfs(docs)
@@ -114,9 +139,12 @@ docs_processed = preprocess_pdfs(docs)
 @st.cache_resource
 def get_vectorstore_and_retriever(_docs_processed, top_k):
     """Cache the vectorstore and retriever creation."""
-    return load_or_create_vectorstore(_docs_processed), load_or_create_vectorstore(_docs_processed).as_retriever(search_kwargs={"k": top_k})
+    vectorstore = load_or_create_vectorstore(_docs_processed)
+    retriever = vectorstore.as_retriever(search_kwargs={"k": top_k})
+    return vectorstore, retriever
 
 
+# Model loading functions
 @st.cache_resource
 def get_chat_model():
     """Cache the chat model creation."""
@@ -124,24 +152,55 @@ def get_chat_model():
 
 
 @st.cache_resource
-def get_rag_agent(_chat_model, _retriever, top_k):
+def get_question_analysis_model():
+    """Cache the question analysis model creation (now uses main model)."""
+    return create_local_llm()  # Use main model (gemma2:2b) for question analysis
+
+
+@st.cache_resource
+def get_tool_model():
+    """Cache the tool model creation (uses gemma3:270m for tool calls)."""
+    return create_local_llm(QUESTION_ANALYSIS_CONFIG)  # Keep gemma3:270m for tool calls
+
+
+@st.cache_resource
+def get_rag_agent(_main_model, _retriever, top_k, _question_model=None, _tool_model=None):
     """Cache the RAG agent creation."""
-    return create_rag_agent(_chat_model, _retriever)
+    return create_rag_agent(_main_model, _retriever, _question_model, _tool_model)
 
 
+# =============================================================================
+# MAIN APPLICATION LOGIC
+# =============================================================================
+
+# Initialize models and vectorstore
 with st.spinner("Loading documents and embeddings..."):
     vectorstore, retriever = get_vectorstore_and_retriever(docs_processed, top_k)
 
-chat_model = get_chat_model()
+main_model = get_chat_model()
+question_model = get_question_analysis_model()
+tool_model = get_tool_model()
 
-if chat_model is None:
+if main_model is None:
     st.error("Failed to load Gemma 2 2B model via Ollama. Please ensure:")
     st.markdown("1. **Ollama is installed and running**")
     st.markdown("2. **Model is installed**: Run `ollama pull gemma2:2b`")
     st.markdown("3. **Check system resources** (≈3GB RAM required)")
     st.stop()
 
-agent = get_rag_agent(chat_model, retriever, top_k)
+if question_model is None:
+    st.warning("Question analysis model not available. Using main model for analysis.")
+    question_model = main_model
+
+if tool_model is None:
+    st.warning("Tool model not available. Using question model for tool calls.")
+    tool_model = question_model
+
+agent = get_rag_agent(main_model, retriever, top_k, question_model, tool_model)
+
+# =============================================================================
+# CHAT INTERFACE
+# =============================================================================
 
 question = st.text_input("Ask the assistant a question about the AI regulations in France")
 
@@ -153,7 +212,7 @@ if st.button("Ask") and question:
 
     st.markdown("**Answer**")
     st.write(answer)
-    
+
     # Only show sources if tool_rag was actually used
     if was_rag_used:
         st.markdown("**Sources used**")

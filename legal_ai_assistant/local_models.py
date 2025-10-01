@@ -4,43 +4,49 @@ from langchain_ollama import ChatOllama
 from .config import LLM_CONFIG
 
 
-def create_local_llm():
+def create_local_llm(config=None):
     """
     Create the configured LLM model using Ollama.
     Inspired by: https://github.com/kaymen99/local-rag-researcher-deepseek/tree/main
 
+    Args:
+        config: Optional configuration dict. If None, uses LLM_CONFIG.
+
     Returns:
         ChatOllama client
     """
-    model_name = LLM_CONFIG["model_name"]
+    if config is None:
+        config = LLM_CONFIG
+
+    model_name = config["model_name"]
     try:
-        # Create ChatOllama instance with all parameters from LLM_CONFIG
+        # Create ChatOllama instance with all parameters from config
         chat_model = ChatOllama(
             model=model_name,
-            temperature=LLM_CONFIG["temperature"],
-            num_predict=LLM_CONFIG["max_new_tokens"],
+            temperature=config["temperature"],
+            num_predict=config["max_new_tokens"],
             verbose=True,
-            # All parameters from LLM_CONFIG
-            num_ctx=LLM_CONFIG["num_ctx"],
-            num_thread=LLM_CONFIG["num_threads"],
-            num_gpu=LLM_CONFIG["num_gpu"],
-            repeat_penalty=LLM_CONFIG["repeat_penalty"],
-            top_k=LLM_CONFIG["top_k"],
-            top_p=LLM_CONFIG["top_p"],
-            num_batch=LLM_CONFIG["num_batch"],
-            use_mmap=LLM_CONFIG["use_mmap"],
-            use_mlock=LLM_CONFIG["use_mlock"],
-            low_vram=LLM_CONFIG["low_vram"],
-            num_keep=LLM_CONFIG["num_keep"],
-            tfs_z=LLM_CONFIG["tfs_z"],
-            typical_p=LLM_CONFIG["typical_p"],
+            # All parameters from config
+            num_ctx=config["num_ctx"],
+            num_thread=config["num_threads"],
+            num_gpu=config["num_gpu"],
+            repeat_penalty=config["repeat_penalty"],
+            top_k=config["top_k"],
+            top_p=config["top_p"],
+            num_batch=config["num_batch"],
+            use_mmap=config["use_mmap"],
+            use_mlock=config["use_mlock"],
+            low_vram=config["low_vram"],
+            num_keep=config["num_keep"],
+            tfs_z=config["tfs_z"],
+            typical_p=config["typical_p"],
         )
 
         print("OK Ollama ChatOllama initialized successfully")
         print(f"   Model: {model_name}")
-        print(f"   Temperature: {LLM_CONFIG['temperature']}")
-        print(f"   Max tokens: {LLM_CONFIG['max_new_tokens']}")
-        print(f"   Description: {LLM_CONFIG['description']}")
+        print(f"   Temperature: {config['temperature']}")
+        print(f"   Max tokens: {config['max_new_tokens']}")
+        print(f"   Description: {config['description']}")
 
         return chat_model
 

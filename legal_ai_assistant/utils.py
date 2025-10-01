@@ -1,3 +1,15 @@
+# utils.py
+"""
+Utility functions for the French AI Law Assistant.
+
+This module contains:
+- PDF document processing and loading
+- Vectorstore management and caching
+- Document retrieval and chunking
+- Token calculation and optimization
+- Embedding model management
+"""
+
 import os
 from pathlib import Path
 from typing import cast
@@ -9,8 +21,16 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 from .config import EMBEDDING_CONFIG, VECTORSTORE_CONFIG, LLM_CONFIG
 
+# =============================================================================
+# GLOBAL CONFIGURATION
+# =============================================================================
+
 EMB_MODEL = EMBEDDING_CONFIG["model_name"]
 
+
+# =============================================================================
+# PDF DOCUMENT PROCESSING
+# =============================================================================
 
 def load_pdfs(path=str):
     pdfs = []
@@ -23,7 +43,8 @@ def load_pdfs(path=str):
 
 
 def preprocess_pdfs(pdfs):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=100)
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=600, chunk_overlap=100)
     docs = text_splitter.split_documents(pdfs)
     for doc in docs:
         # Extract the parent directory name from the file path
@@ -49,6 +70,10 @@ def preprocess_pdfs(pdfs):
     return docs
 
 
+# =============================================================================
+# VECTORSTORE MANAGEMENT
+# =============================================================================
+
 def store_docs_with_embeddings(docs):
     model = HuggingFaceEmbeddings(
         model_name=EMB_MODEL,
@@ -68,16 +93,13 @@ def store_docs_with_embeddings(docs):
     return vectorstore
 
 
+# =============================================================================
+# DOCUMENT RETRIEVAL
+# =============================================================================
+
 def retrieve_documents(query: str, retriever):
-    """Retrieve documents with token optimization."""
+    """Retrieve documents from vectorstore."""
     docs_retrieved = retriever.invoke(query)
-    
-    # Limit document content length to prevent token overflow
-    max_doc_length = 300  # Reduced for token efficiency
-    for doc in docs_retrieved:
-        if len(doc.page_content) > max_doc_length:
-            doc.page_content = doc.page_content[:max_doc_length] + "..."
-    
     return docs_retrieved
 
 
@@ -132,43 +154,89 @@ def load_or_create_vectorstore(docs, cache_key=None):
     return vectorstore
 
 
-# ---------- TOKEN CALCULATION UTILITIES ----------
+# =============================================================================
+# TOKEN CALCULATION AND OPTIMIZATION
+# =============================================================================
+
 def estimate_tokens_from_chars(text: str) -> int:
-    """Estimate token count from character count (rough approximation: 1 token ≈ 4 chars)."""
-    return len(text) // 4
+    """Estimate token count from character count with improved accuracy for multilingual content."""
+    # More accurate estimation considering French/legal text complexity
+    # French text typically has higher token density than English
+    if not text:
+        return 0
+
+    # Base ratio: ~3.5 chars per token for French legal text
+    # Adjust based on text characteristics
+    char_count = len(text)
+    base_ratio = 3.5
+
+    # Adjust for French-specific patterns (accents, longer words)
+    french_chars = sum(1 for c in text if c in 'àâäéèêëïîôöùûüÿçñ')
+    if french_chars > 0:
+        # French text typically needs more tokens
+        base_ratio = 3.2
+
+    # Adjust for legal terminology (longer words, complex sentences)
+    avg_word_length = char_count / max(
+        text.count(' ') + text.count('\n') + 1, 1)
+    if avg_word_length > 8:  # Legal text tends to have longer words
+        base_ratio *= 0.9  # More tokens needed
+
+    return int(char_count / base_ratio)
 
 
-def calculate_max_response_tokens(context_length: int, num_docs: int, workflow_overhead: int = 100) -> int:
-    """Calculate maximum response tokens based on available context."""
-    
-    # Base context window
+def calculate_max_response_tokens(doc_content: str, user_question: str = "", 
+                                  workflow_overhead: int = 100) -> int:
+    """Calculate maximum response tokens based on actual content length."""
+
+    # Validate input types
+    if not isinstance(doc_content, str):
+        raise TypeError(
+            f"doc_content must be a string, got {type(doc_content).__name__}")
+    if not isinstance(user_question, str):
+        raise TypeError(f"user_question must be a string, "
+                        f"got {type(user_question).__name__}")
+    if not isinstance(workflow_overhead, int):
+        raise TypeError(f"workflow_overhead must be an integer, "
+                        f"got {type(workflow_overhead).__name__}")
+
+    # Base context window - increased since we removed document truncation
     total_context: int = cast(int, LLM_CONFIG["context_window"])
-    
-    # Estimate tokens for different components
-    system_prompt_tokens = 50  # Estimated system prompt tokens
-    user_question_tokens = 30  # Estimated user question tokens
-    doc_content_tokens = context_length // 4  # Document content (chars to tokens)
-    prompt_formatting_tokens = 80  # Prompt structure and formatting
-    
+
+    # Use improved token estimation for actual content
+    doc_content_tokens = estimate_tokens_from_chars(doc_content)
+    user_question_tokens = estimate_tokens_from_chars(
+        user_question) if user_question else 50
+
+    # More realistic estimates based on actual prompt structure
+    system_prompt_tokens = 120  # More accurate for legal assistant prompt
+    prompt_formatting_tokens = 150  # Includes structure, instructions, formatting
+
+    # Dynamic overhead based on number of documents (more docs = more structure)
+    doc_count_overhead = min(50, len(doc_content.split('\n\n')) * 5)
+
     # Total reserved tokens
-    reserved_tokens = (system_prompt_tokens + user_question_tokens + 
-                      doc_content_tokens + prompt_formatting_tokens + workflow_overhead)
-    
+    reserved_tokens = (system_prompt_tokens + user_question_tokens +
+                       doc_content_tokens + prompt_formatting_tokens +
+                       workflow_overhead + doc_count_overhead)
+
     # Calculate available space for response
     available_tokens = total_context - reserved_tokens
-    
-    # Apply safety margin (25% buffer for safety)
-    max_response_tokens = int(available_tokens * 0.75)
-    
-    # Ensure minimum response length
-    min_response_tokens = 60
+
+    # Apply smaller safety margin since we need more comprehensive responses
+    max_response_tokens = int(available_tokens * 0.85)  # Reduced from 0.75 to 0.85
+
+    # Ensure minimum response length for legal analysis
+    min_response_tokens = 100  # Increased from 60 to 100
     max_response_tokens = max(max_response_tokens, min_response_tokens)
-    
+
     # Cap at model's max_new_tokens setting
     model_max_tokens: int = cast(int, LLM_CONFIG["max_new_tokens"])
     max_response_tokens = min(max_response_tokens, model_max_tokens)
-    
-    # Debug info (can be removed in production)
-    print(f"[TOKEN_CALC] Context: {total_context}, Reserved: {reserved_tokens}, Available: {available_tokens}, Max response: {max_response_tokens}")
-    
+
+    # Debug info with more details
+    print(f"[TOKEN_CALC] Context: {total_context}, Doc tokens: {doc_content_tokens}, "
+          f"User tokens: {user_question_tokens}, Reserved: {reserved_tokens}, "
+          f"Available: {available_tokens}, Max response: {max_response_tokens}")
+
     return max_response_tokens
