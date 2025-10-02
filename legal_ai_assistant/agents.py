@@ -558,25 +558,12 @@ def provide_general_response(state: dict, progress_callback=None):
     if progress_callback:
         progress_callback("💬 Providing general response...", 50)
 
-    # Extract reformulated question from the last message
-    reformulated_question = ""
-    if messages:
-        last_message = messages[-1]
-        if (
-            hasattr(last_message, "additional_kwargs")
-            and last_message.additional_kwargs
-        ):
-            reformulated_question = last_message.additional_kwargs.get(
-                "reformulated_question", ""
-            )
-        else:
-            reformulated_question = (
-                last_message.content if hasattr(last_message, "content") else ""
-            )
+    # Extract the original user question (not the reformulated one)
+    original_question = _find_user_question(messages)
 
     response_content = f"""I am a legal assistant specialized in French and European law.
 
-Your question: "{reformulated_question}"
+Your question: "{original_question}"
 
 This question does not appear to be directly related to the legal domain. I can help you with:
 - Questions about French and European law
