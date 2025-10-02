@@ -245,6 +245,9 @@ Legal Documents Retrieved:
 - **CRITICAL: Give a direct answer first, then provide supporting details.**
 - **CRITICAL: Avoid redundant phrases like "it is important to", "it is crucial to", "it is necessary to".**
 - **CRITICAL: Do not repeat the same information in different words.**
+- **CRITICAL: Cite specific articles, regulations, and legal provisions as much as possible.**
+- **CRITICAL: Always include article numbers, regulation names, and specific legal references when available.**
+- **CRITICAL: Format citations clearly (e.g., "Article 44 GDPR", "Article 5 EU AI Act 2024", "Article L. 34-1 du Code des postes et des communications électroniques").**
 
 **FINAL REMINDER: Every single word in your response must be in the same language as the question ({lang_detected}).**
 """
