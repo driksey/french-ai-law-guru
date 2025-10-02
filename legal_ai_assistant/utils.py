@@ -32,6 +32,7 @@ EMB_MODEL = EMBEDDING_CONFIG["model_name"]
 # PDF DOCUMENT PROCESSING
 # =============================================================================
 
+
 def load_pdfs(path=str):
     pdfs = []
     for filename in os.listdir(path):
@@ -43,8 +44,7 @@ def load_pdfs(path=str):
 
 
 def preprocess_pdfs(pdfs):
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=600, chunk_overlap=100)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=100)
     docs = text_splitter.split_documents(pdfs)
     for doc in docs:
         # Extract the parent directory name from the file path
@@ -63,10 +63,7 @@ def preprocess_pdfs(pdfs):
         else:
             category = "unknown"  # Fallback if path structure is unexpected
 
-        doc.metadata = {
-            "source": source_path,
-            "category": category
-        }
+        doc.metadata = {"source": source_path, "category": category}
     return docs
 
 
@@ -74,21 +71,22 @@ def preprocess_pdfs(pdfs):
 # VECTORSTORE MANAGEMENT
 # =============================================================================
 
+
 def store_docs_with_embeddings(docs):
     model = HuggingFaceEmbeddings(
         model_name=EMB_MODEL,
         model_kwargs={"device": "cpu"},
         encode_kwargs={
             "batch_size": EMBEDDING_CONFIG["batch_size"],
-            "normalize_embeddings": EMBEDDING_CONFIG["normalize_embeddings"]
+            "normalize_embeddings": EMBEDDING_CONFIG["normalize_embeddings"],
         },
-        show_progress=EMBEDDING_CONFIG["show_progress"]
+        show_progress=EMBEDDING_CONFIG["show_progress"],
     )
     vectorstore = Chroma.from_documents(
         docs,
         embedding=model,
         collection_name=VECTORSTORE_CONFIG["collection_name"],
-        persist_directory=VECTORSTORE_CONFIG["persist_directory"]
+        persist_directory=VECTORSTORE_CONFIG["persist_directory"],
     )
     return vectorstore
 
@@ -96,6 +94,7 @@ def store_docs_with_embeddings(docs):
 # =============================================================================
 # DOCUMENT RETRIEVAL
 # =============================================================================
+
 
 def retrieve_documents(query: str, retriever):
     """Retrieve documents from vectorstore."""
@@ -127,14 +126,14 @@ def load_or_create_vectorstore(docs, cache_key=None):
                 model_kwargs={"device": "cpu"},
                 encode_kwargs={
                     "batch_size": EMBEDDING_CONFIG["batch_size"],
-                    "normalize_embeddings": EMBEDDING_CONFIG["normalize_embeddings"]
+                    "normalize_embeddings": EMBEDDING_CONFIG["normalize_embeddings"],
                 },
-                show_progress=False  # No progress bar for loading
+                show_progress=False,  # No progress bar for loading
             )
             vectorstore = Chroma(
                 persist_directory=persist_dir,
                 embedding_function=model,
-                collection_name=VECTORSTORE_CONFIG["collection_name"]
+                collection_name=VECTORSTORE_CONFIG["collection_name"],
             )
 
             # Test if the vectorstore has documents
@@ -155,8 +154,114 @@ def load_or_create_vectorstore(docs, cache_key=None):
 
 
 # =============================================================================
+# DOCUMENT NAME EXTRACTION
+# =============================================================================
+
+
+def extract_document_name(doc_content, doc_index: int = 0) -> str:
+    """
+    Extract a meaningful document name from document content or metadata.
+
+    Args:
+        doc_content: Document content (string or document object with metadata)
+        doc_index: Index of the document for fallback naming
+
+    Returns:
+        str: Extracted document name
+    """
+    # Default fallback name
+    doc_name = f"Document {doc_index + 1}"
+
+    # Try to extract from metadata if available (LangChain Document objects)
+    if hasattr(doc_content, "metadata") and doc_content.metadata:
+        source_path = doc_content.metadata.get("source", "")
+        if source_path:
+            # Extract filename from path and clean it up
+            filename = source_path.split("/")[-1].split("\\")[
+                -1
+            ]  # Handle both Unix and Windows paths
+            doc_name = filename.replace(".pdf", "").replace("_", " ")
+            return doc_name
+
+    # If doc_content is a string representation of Document objects, parse it
+    if isinstance(doc_content, str) and "Document(" in doc_content:
+        # Try to extract source from the string representation
+        import re
+
+        # Look for 'source': 'path' pattern - find ALL occurrences
+        source_matches = re.findall(r"'source':\s*'([^']+)'", doc_content)
+        if source_matches:
+            # Use the first source found (or could use doc_index to select specific one)
+            source_path = (
+                source_matches[0]
+                if doc_index < len(source_matches)
+                else source_matches[0]
+            )
+            filename = source_path.split("/")[-1].split("\\")[
+                -1
+            ]  # Handle both Unix and Windows paths
+            doc_name = filename.replace(".pdf", "").replace("_", " ")
+            return doc_name
+
+    # If doc_content is a string, try to extract meaningful title
+    if isinstance(doc_content, str) and len(doc_content) > 50:
+        first_lines = doc_content.split("\n")[:3]
+        for line in first_lines:
+            line = line.strip()
+            if len(line) > 10:
+                # Look for legal document keywords
+                legal_keywords = [
+                    "regulation",
+                    "directive",
+                    "act",
+                    "law",
+                    "eu",
+                    "french",
+                    "artificial intelligence",
+                    "data protection",
+                    "gdpr",
+                    "ai act",
+                ]
+                if any(keyword in line.lower() for keyword in legal_keywords):
+                    # Truncate if too long
+                    doc_name = line[:50] + "..." if len(line) > 50 else line
+                    return doc_name
+
+    # If we still have the default name, try to extract from page_content if it's a Document object
+    if hasattr(doc_content, "page_content") and isinstance(
+        doc_content.page_content, str
+    ):
+        content = doc_content.page_content
+        if len(content) > 50:
+            first_lines = content.split("\n")[:3]
+            for line in first_lines:
+                line = line.strip()
+                if len(line) > 10:
+                    # Look for legal document keywords
+                    legal_keywords = [
+                        "regulation",
+                        "directive",
+                        "act",
+                        "law",
+                        "eu",
+                        "french",
+                        "artificial intelligence",
+                        "data protection",
+                        "gdpr",
+                        "ai act",
+                    ]
+                    if any(keyword in line.lower() for keyword in legal_keywords):
+                        # Truncate if too long
+                        doc_name = line[:50] + "..." if len(line) > 50 else line
+                        return doc_name
+
+    return doc_name
+
+
+# =============================================================================
 # TOKEN CALCULATION AND OPTIMIZATION
 # =============================================================================
+
 
 def estimate_tokens_from_chars(text: str) -> int:
     """Estimate token count from character count with improved accuracy for multilingual content."""
@@ -171,54 +276,64 @@ def estimate_tokens_from_chars(text: str) -> int:
     base_ratio = 3.5
 
     # Adjust for French-specific patterns (accents, longer words)
-    french_chars = sum(1 for c in text if c in 'àâäéèêëïîôöùûüÿçñ')
+    french_chars = sum(1 for c in text if c in "àâäéèêëïîôöùûüÿçñ")
     if french_chars > 0:
         # French text typically needs more tokens
         base_ratio = 3.2
 
     # Adjust for legal terminology (longer words, complex sentences)
-    avg_word_length = char_count / max(
-        text.count(' ') + text.count('\n') + 1, 1)
+    avg_word_length = char_count / max(text.count(" ") + text.count("\n") + 1, 1)
     if avg_word_length > 8:  # Legal text tends to have longer words
         base_ratio *= 0.9  # More tokens needed
 
     return int(char_count / base_ratio)
 
 
-def calculate_max_response_tokens(doc_content: str, user_question: str = "", 
-                                  workflow_overhead: int = 100) -> int:
+def calculate_max_response_tokens(
+    doc_content: str, user_question: str = "", workflow_overhead: int = 100
+) -> int:
     """Calculate maximum response tokens based on actual content length."""
 
     # Validate input types
     if not isinstance(doc_content, str):
         raise TypeError(
-            f"doc_content must be a string, got {type(doc_content).__name__}")
+            f"doc_content must be a string, got {type(doc_content).__name__}"
+        )
     if not isinstance(user_question, str):
-        raise TypeError(f"user_question must be a string, "
-                        f"got {type(user_question).__name__}")
+        raise TypeError(
+            f"user_question must be a string, " f"got {type(user_question).__name__}"
+        )
     if not isinstance(workflow_overhead, int):
-        raise TypeError(f"workflow_overhead must be an integer, "
-                        f"got {type(workflow_overhead).__name__}")
+        raise TypeError(
+            f"workflow_overhead must be an integer, "
+            f"got {type(workflow_overhead).__name__}"
+        )
 
     # Base context window - increased since we removed document truncation
     total_context: int = cast(int, LLM_CONFIG["context_window"])
 
     # Use improved token estimation for actual content
     doc_content_tokens = estimate_tokens_from_chars(doc_content)
-    user_question_tokens = estimate_tokens_from_chars(
-        user_question) if user_question else 50
+    user_question_tokens = (
+        estimate_tokens_from_chars(user_question) if user_question else 50
+    )
 
     # More realistic estimates based on actual prompt structure
     system_prompt_tokens = 120  # More accurate for legal assistant prompt
     prompt_formatting_tokens = 150  # Includes structure, instructions, formatting
 
     # Dynamic overhead based on number of documents (more docs = more structure)
-    doc_count_overhead = min(50, len(doc_content.split('\n\n')) * 5)
+    doc_count_overhead = min(50, len(doc_content.split("\n\n")) * 5)
 
     # Total reserved tokens
-    reserved_tokens = (system_prompt_tokens + user_question_tokens +
-                       doc_content_tokens + prompt_formatting_tokens +
-                       workflow_overhead + doc_count_overhead)
+    reserved_tokens = (
+        system_prompt_tokens
+        + user_question_tokens
+        + doc_content_tokens
+        + prompt_formatting_tokens
+        + workflow_overhead
+        + doc_count_overhead
+    )
 
     # Calculate available space for response
     available_tokens = total_context - reserved_tokens
@@ -235,8 +350,10 @@ def calculate_max_response_tokens(doc_content: str, user_question: str = "",
     max_response_tokens = min(max_response_tokens, model_max_tokens)
 
     # Debug info with more details
-    print(f"[TOKEN_CALC] Context: {total_context}, Doc tokens: {doc_content_tokens}, "
-          f"User tokens: {user_question_tokens}, Reserved: {reserved_tokens}, "
-          f"Available: {available_tokens}, Max response: {max_response_tokens}")
+    print(
+        f"[TOKEN_CALC] Context: {total_context}, Doc tokens: {doc_content_tokens}, "
+        f"User tokens: {user_question_tokens}, Reserved: {reserved_tokens}, "
+        f"Available: {available_tokens}, Max response: {max_response_tokens}"
+    )
 
     return max_response_tokens
