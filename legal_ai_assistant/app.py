@@ -96,48 +96,30 @@ with st.sidebar:
 
     st.markdown("---")  # Separator line
 
-    # Model configuration
-    st.markdown("### Model Configuration")
-    st.info("🚀 Using Gemma 2 2B via Ollama (~3GB RAM)")
-
-    st.markdown("---")  # Separator line
-
-    # Show model information in two columns
-    model_info = get_model_info()
-    embedding_info = get_embedding_info()
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("**🤖 LLM Model**")
-        st.markdown(f"**Model:** {LLM_CONFIG['model_name']}")
-        st.markdown(f"- Size: {model_info['size']}")
-        st.markdown(f"- RAM Required: {model_info['ram_required']}")
-        st.markdown(f"- Description: {model_info['description']}")
-        st.markdown("- Backend: Ollama (Local)")
-
-    with col2:
-        st.markdown("**🔤 Embedding Model**")
-        st.markdown(f"**Model:** {EMBEDDING_CONFIG['model_name']}")
-        st.markdown(f"- Size: {embedding_info['size']}")
-        st.markdown(f"- Languages: {embedding_info['languages_count']} languages")
-        st.markdown("- Cross-lingual: FR-EN optimized")
-        st.markdown(f"- Description: {embedding_info['description']}")
-        st.markdown("- Backend: Hugging Face (Local)")
-
-    st.markdown("---")  # Separator line
-
-    # Expandable section for supported languages
-    with st.expander("🌍 Supported Languages"):
-        languages = embedding_info["supported_languages"]
-        # Group languages for better display
-        col1, col2 = st.columns(2)
-        with col1:
-            for lang in languages[:8]:  # First 8 languages
-                st.markdown(f"- {lang.upper()}")
-        with col2:
-            for lang in languages[8:]:  # Remaining languages
-                st.markdown(f"- {lang.upper()}")
+    # What you can do with this app
+    st.markdown("### 💡 What You Can Do")
+    
+    st.markdown("**🔍 Ask Legal Questions**")
+    st.markdown("- Questions about AI regulations")
+    st.markdown("- GDPR compliance queries")
+    st.markdown("- French and European law")
+    st.markdown("- Data protection issues")
+    
+    st.markdown("**🌍 Multilingual Support**")
+    st.markdown("- Ask questions in any language")
+    st.markdown("- Get answers in your language")
+    st.markdown("- Supports French, English, Spanish, German, Italian, Portuguese, Dutch, Polish")
+    
+    st.markdown("**📚 Document Analysis**")
+    st.markdown("- AI searches through legal documents")
+    st.markdown("- Cites specific articles and regulations")
+    st.markdown("- Provides practical recommendations")
+    
+    st.markdown("**⚖️ Legal Guidance**")
+    st.markdown("- Compliance requirements")
+    st.markdown("- Risk assessment")
+    st.markdown("- Enforcement authorities")
+    st.markdown("- When to consult lawyers")
 
 
 # =============================================================================
