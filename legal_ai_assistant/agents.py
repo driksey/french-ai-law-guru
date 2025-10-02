@@ -114,15 +114,15 @@ def create_analysis_prompt():
 You are an expert legal classifier and document retrieval specialist.
 
 **Your tasks:**
-1. Determine if the question is of a legal nature
-2. If legal, reformulate ONLY if necessary for better document retrieval
-3. If non-legal, keep the original question unchanged
+1. Determine if the input is of a legal nature
+2. If legal, reformulate for optimal document retrieval while preserving context
+3. If non-legal, keep the original input unchanged
 4. Identify the specific legal scope/domain if applicable
 
-**IMPORTANT: Respect the original intent of the question. Do not transform greetings, casual conversations, or non-legal questions into legal questions.**
+**IMPORTANT: The user input may contain context, background information, or multiple questions. Extract the core legal question and optimize it for document search.**
 
 **Legal Classification Criteria:**
-A question is considered LEGAL (is_legal: true) ONLY if it explicitly involves:
+An input is considered LEGAL (is_legal: true) ONLY if it explicitly involves:
 - Laws, regulations, statutes, or legal frameworks
 - Rights and obligations (individual, corporate, governmental)
 - Contracts, agreements, or legal clauses
@@ -131,36 +131,38 @@ A question is considered LEGAL (is_legal: true) ONLY if it explicitly involves:
 - Data protection, privacy, or cybersecurity regulations
 - AI regulations, digital services, or technology law
 
-A question is considered NON-LEGAL (is_legal: false) if it involves:
+An input is considered NON-LEGAL (is_legal: false) if it involves:
 - Greetings, casual conversations, or social interactions
 - Pure technical questions (e.g., "How to install software?")
 - General knowledge questions (e.g., "What is the capital of France?")
 - Personal opinions or preferences
 - Questions unrelated to legal matters
-- Simple greetings like "Comment ça va ?", "How are you?", "Bonjour"
+- Simple greetings like "How are you?", "Hello", "Good morning"
 
-**Reformulation Guidelines (ONLY for legal questions):**
-- Keep the original meaning and intent
-- Only add legal context if it helps document retrieval
-- Do not change the core question
+**Reformulation Guidelines (ONLY for legal inputs):**
+- Extract the core legal question from any context provided
+- Add relevant legal terminology and frameworks for better document retrieval
+- Include specific legal domains (GDPR, AI Act, French law, etc.) when applicable
 - Preserve the original language
+- Make the query more specific and searchable
+- If multiple questions are present, combine them into a comprehensive query
 
 **Response Format:**
 Respond ONLY with valid JSON containing:
-1. "reformulated_question": "original question if non-legal, or slightly improved version if legal"
+1. "reformulated_question": "original input if non-legal, or optimized legal query if legal"
 2. "is_legal": true or false (based on criteria above)
 3. "scope": "legal domain" if legal, otherwise "general"
 
-Example 1 (Legal):
+Example 1 (Legal with context):
 {{
-  "reformulated_question": "What are the GDPR compliance requirements for AI systems?",
+  "reformulated_question": "What are the GDPR compliance requirements for AI systems processing personal data?",
   "is_legal": true,
   "scope": "data protection law"
 }}
 
 Example 2 (Non-legal greeting):
 {{
-  "reformulated_question": "Comment ça va ?",
+  "reformulated_question": "How are you?",
   "is_legal": false,
   "scope": "general"
 }}
@@ -219,6 +221,8 @@ Follow these rules strictly:
 
 def _create_final_prompt(user_question, tool_content, lang_detected, max_tokens):
     """Create the final answer prompt."""
+    
+    # Create a general prompt that adapts to any language
     return f"""You are a legal assistant specialized in French and European law.
 
 Question (language={lang_detected}): {user_question}
@@ -226,44 +230,23 @@ Question (language={lang_detected}): {user_question}
 Legal Documents Retrieved:
 {tool_content}
 
-**STRUCTURE YOUR RESPONSE AS FOLLOWS:**
-
-1. **DIRECT ANSWER** (Légal/Illégal/Partiellement légal):
-   - Start with a clear, direct answer to the legal question
-   - Avoid vague responses like "it depends" or "difficult to answer"
-
-2. **LEGAL BASIS**:
-   - Cite specific legal references (e.g., "Article 44 GDPR", "Article 5 EU AI Act 2024")
-   - Include relevant jurisprudence (e.g., "Schrems II case", "CNIL decision 2023-XX")
-   - Reference exact regulation names and article numbers
-
-3. **CONDITIONS/REQUIREMENTS**:
-   - List specific conditions that must be met
-   - Explain exceptions or special cases
-   - Include procedural requirements
-
-4. **PRACTICAL CONSEQUENCES**:
-   - Mention potential sanctions, fines, or legal risks
-   - Include compliance obligations
-   - Reference enforcement authorities (CNIL, DGCCRF, etc.)
-
-5. **RECOMMENDATIONS**:
-   - Provide practical next steps
-   - Suggest when to consult legal experts
+**IMPORTANT: Respond ENTIRELY in the SAME LANGUAGE as the question ({lang_detected}). Do not mix languages.**
 
 **RESPONSE REQUIREMENTS:**
-- Respond in the SAME LANGUAGE as the question ({lang_detected})
+- Respond EXCLUSIVELY in the same language as the question ({lang_detected})
 - Be specific and actionable, not generic
-- Use proper legal terminology
+- Use proper legal terminology in the target language
 - Keep response under {max_tokens} tokens to avoid truncation
 - If documents don't contain enough information, clearly state what additional information is needed
+- Provide a comprehensive and well-structured answer that directly addresses the question
+- Include relevant legal references, conditions, consequences, and practical recommendations when applicable
+- Use natural language flow without rigid section headers
+- **CRITICAL: Be concise and avoid repetition. Each point should be mentioned only once.**
+- **CRITICAL: Give a direct answer first, then provide supporting details.**
+- **CRITICAL: Avoid redundant phrases like "it is important to", "it is crucial to", "it is necessary to".**
+- **CRITICAL: Do not repeat the same information in different words.**
 
-**EXAMPLE STRUCTURE:**
-"**DIRECT ANSWER:** Non, ce transfert est illégal sans mesures de conformité spécifiques.
-
-**LEGAL BASIS:** Article 44-49 GDPR sur les transferts internationaux, Schrems II (CJUE 2020)...
-
-**CONDITIONS:** Consentement explicite, SCCs, assessment d'adéquation..."
+**FINAL REMINDER: Every single word in your response must be in the same language as the question ({lang_detected}).**
 """
 
 
@@ -325,6 +308,20 @@ def _find_user_question(messages):
         if isinstance(message, HumanMessage):
             return message.content
     return "the user's question"
+
+
+def _find_reformulated_question(messages):
+    """Find the reformulated question from the analysis node."""
+    for message in messages:
+        # Look for AI messages with analysis metadata
+        if (isinstance(message, AIMessage) and 
+            hasattr(message, "additional_kwargs") and 
+            message.additional_kwargs and 
+            "reformulated_question" in message.additional_kwargs):
+            return message.additional_kwargs["reformulated_question"]
+    
+    # Fallback to original user question if reformulated question not found
+    return _find_user_question(messages)
 
 
 # =============================================================================
@@ -398,27 +395,31 @@ def create_final_answer(state: MessagesState, chat_model, progress_callback=None
     # Get the latest tool result
     latest_tool_message = tool_messages[-1]
 
-    # Find the original user question
-    user_question = _find_user_question(messages)
+    # Find the reformulated question from the analysis node
+    reformulated_question = _find_reformulated_question(messages)
+    
+    # Find the original user question for language detection
+    original_question = _find_user_question(messages)
 
     # Progress callback for final answer generation
     if progress_callback:
         progress_callback("📝 Generating comprehensive legal answer...", 70)
 
-    # Detect language for the final answer to match user's original question
+    # Detect language for the final answer based on the ORIGINAL question
     try:
-        lang_detected = detect(user_question)
+        lang_detected = detect(original_question)
     except Exception:
         lang_detected = None
 
     # Calculate dynamic response length limit using actual content
     max_response_tokens = calculate_max_response_tokens(
-        latest_tool_message.content, user_question
+        latest_tool_message.content, reformulated_question
     )
 
     # Create prompt and generate answer
+    # Use reformulated question for content but original question language for response language
     final_prompt = _create_final_prompt(
-        user_question, latest_tool_message.content, lang_detected, max_response_tokens
+        reformulated_question, latest_tool_message.content, lang_detected, max_response_tokens
     )
 
     try:
